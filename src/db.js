@@ -7,10 +7,10 @@ import bcrypt from 'bcryptjs'
 const fetchImpl = globalThis.fetch || (() => { throw new Error('fetch API not available: please use Node 18+ or add a fetch polyfill.') })()
 
 // We are Supabase-only now: remove Postgres pool logic.
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || null
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || null
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || null
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || null
 // Optional service role key for writes under RLS
-const SUPABASE_SERVICE_ROLE_KEY = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || null
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || null
 
 // Helper: choose appropriate key (service role preferred for mutations to avoid RLS blocking inserts)
 function supabaseKey(forWrite = false) {
