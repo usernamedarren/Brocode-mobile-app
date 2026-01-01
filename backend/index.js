@@ -229,6 +229,4 @@ app.use(express.static(path.join(__dirname, '../public')))
 app.use('/assets', express.static(path.join(__dirname, '../public/assets')))
 
 // Export handler for Vercel Serverless Functions
-export default function handler(req, res) {
-    return app(req, res)
-}
+export default app
