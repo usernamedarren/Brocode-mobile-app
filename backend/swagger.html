@@ -1,40 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Barbershop API Documentation</title>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css">
-  <style>
-    html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
-    *, *:before, *:after { box-sizing: inherit; }
-    body { margin:0; padding:0; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Barbershop API Documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css">
 </head>
 <body>
-  <div id="swagger-ui"></div>
-  
-  <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui.js"></script>
-  <script>
-    window.onload = function() {
-      const ui = SwaggerUIBundle({
-        url: "/api-docs/swagger.json",
-        dom_id: '#swagger-ui',
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIBundle.SwaggerUIStandalonePreset
-        ],
-        layout: "BaseLayout",
-        deepLinking: true,
-        onComplete: function() {
-          console.log("Swagger UI loaded successfully");
-        },
-        onFailure: function(error) {
-          console.error("Failed to load Swagger UI:", error);
-        }
-      });
-      window.ui = ui;
-    }
-  </script>
+    <div id="swagger-ui"></div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.js" charset="UTF-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.min.js" charset="UTF-8"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ui = SwaggerUIBundle({
+                url: "/api-docs/swagger.json",
+                dom_id: '#swagger-ui',
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                layout: "StandaloneLayout",
+                onComplete: function() {
+                    console.log("Swagger UI loaded successfully");
+                }
+            });
+        });
+    </script>
 </body>
 </html>
