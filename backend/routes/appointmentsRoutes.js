@@ -33,14 +33,16 @@ const router = express.Router()
 // GET /api/appointment (singular) or /api/appointments (plural)
 router.get(['/appointment', '/appointments'], async (req, res) => {
   try {
-    const { user_id } = req.query
+    const { user_id, email } = req.query
     let rows
     
-    console.log('GET /api/appointments - user_id:', user_id)
+    // Support both user_id (for backward compatibility) and email (preferred)
+    const filterBy = email || user_id
+    console.log('GET /api/appointments - filter:', filterBy)
     
-    if (user_id) {
-      // Filter by user_id if provided
-      rows = await db.getAppointmentsByUser(user_id)
+    if (filterBy) {
+      // Filter by email/user_id if provided
+      rows = await db.getAppointmentsByUser(filterBy)
     } else {
       rows = await db.getAppointments()
     }

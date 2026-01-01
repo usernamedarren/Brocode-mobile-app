@@ -190,17 +190,17 @@ async function getAppointments() {
   return await resp.json()
 }
 
-async function getAppointmentsByUser(userId) {
+async function getAppointmentsByUser(userEmail) {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for appointment fetch')
-  // User's schema: table "appointment" (singular). Filter by user_id
-  // Just get all fields without joins to avoid schema issues
-  const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/appointment?user_id=eq.${userId}&select=*&order=date.desc,time.desc`
+  // Filter by email since user_id column doesn't exist
+  // userEmail can be either email string or will be treated as user identifier
+  const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/appointment?email=eq.${encodeURIComponent(userEmail)}&select=*&order=date.desc,time.desc`
   if (!fetchImpl) throw new Error('No fetch implementation available')
   const resp = await fetchImpl(url, { method:'GET', headers: buildHeaders() })
   if (!resp.ok) {
     const errorText = await resp.text()
     console.error(`Supabase appointment fetch error: ${resp.status}`, errorText)
-    throw new Error(`Supabase appointment fetch error: ${resp.status}`)
+    throw new Error(`Supabase appointment fetch error: ${resp.status} ${errorText}`)
   }
   return await resp.json()
 }
