@@ -1,10 +1,8 @@
-// Backend API configuration
-// Change this to your computer's IP address when running on physical device
-// Keep as localhost when using emulator
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-// const API_BASE_URL = 'http://10.0.2.2:5003'; // For Android emulator
-// const API_BASE_URL = 'http://192.168.100.102:5003'; // For physical device (WiFi IP)
-const API_BASE_URL = 'https://ii3140-uts-pawm-yyvw.vercel.app'; // For production (Vercel)
+if (!API_BASE_URL) {
+  throw new Error('Missing EXPO_PUBLIC_API_BASE_URL environment variable. Please check your .env file.');
+}
 
 export const api = {
   login: async (email, password) => {

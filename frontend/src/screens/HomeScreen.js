@@ -420,7 +420,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.heroButtons}>
             <TouchableOpacity
               style={styles.btnPrimary}
-              onPress={() => navigation.navigate('Booking')}
+              onPress={() => user ? navigation.navigate('Booking') : navigation.navigate('Login')}
             >
               <Text style={styles.btnText}>BOOK AN APPOINTMENT</Text>
             </TouchableOpacity>
@@ -567,7 +567,7 @@ const HomeScreen = ({ navigation }) => {
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <TouchableOpacity
               style={styles.ctaButton}
-              onPress={() => navigation.navigate('Booking')}
+              onPress={() => user ? navigation.navigate('Booking') : navigation.navigate('Login')}
             >
               <Text style={styles.ctaButtonText}>BOOKING SEKARANG</Text>
             </TouchableOpacity>

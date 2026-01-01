@@ -6,7 +6,9 @@ import {
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,7 +22,24 @@ const AdminScreen = () => {
     confirmedAppointments: 0,
   });
   const [refreshing, setRefreshing] = useState(false);
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Apakah Anda yakin ingin keluar?',
+      [
+        { text: 'Batal', style: 'cancel' },
+        { 
+          text: 'Keluar', 
+          onPress: async () => {
+            await signOut();
+          },
+          style: 'destructive'
+        }
+      ]
+    );
+  };
 
   const fetchData = async () => {
     try {
@@ -84,7 +103,13 @@ const AdminScreen = () => {
       }
     >
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Admin Dashboard</Text>
+        <View>
+          <Text style={styles.headerTitle}>Admin Dashboard</Text>
+          <Text style={styles.headerSubtitle}>Selamat datang, {user?.name || 'Admin'}</Text>
+        </View>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <Ionicons name="log-out-outline" size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       {/* Statistics */}
@@ -184,9 +209,11 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#C6A96E',
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   headerTitle: {
@@ -194,6 +221,15 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#fff',
     letterSpacing: 1,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#fff',
+    marginTop: 4,
+    opacity: 0.9,
+  },
+  logoutButton: {
+    padding: 8,
   },
   statsContainer: {
     flexDirection: 'row',

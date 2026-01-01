@@ -1,4 +1,6 @@
 import express from 'express'
+import swaggerUi from 'swagger-ui-express'
+import swaggerSpecs from './swagger.js'
 // Import DB so it initializes on server start (connects to Railway when DATABASE_URL is present)
 import db from './db.js'
 // Diagnostic: log key env presence to help debug startup exits (no secrets leaked)
@@ -20,6 +22,12 @@ process.on('exit', (code) => {
 
 // Middleware
 app.use(express.json())
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
+  customCss: '.topbar { display: none }',
+  customSiteTitle: 'Barbershop API Docs',
+}))
 
 // Enable CORS for mobile app
 app.use((req, res, next) => {
@@ -50,13 +58,8 @@ app.get('/', (req, res) => {
     res.json({ 
         message: 'Barbershop API is running',
         version: '1.0.0',
-        endpoints: {
-            auth: '/api/login, /api/register',
-            services: '/api/services',
-            capsters: '/api/capsters',
-            appointments: '/api/appointments',
-            accounts: '/api/accounts'
-        }
+        documentation: '/api-docs',
+        info: 'See /api-docs for full API documentation'
     })
 })
 

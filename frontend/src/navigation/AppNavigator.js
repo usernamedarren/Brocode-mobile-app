@@ -28,7 +28,7 @@ const AuthStack = () => {
   );
 };
 
-const MainTabs = () => {
+const MainTabs = ({ isGuest, user }) => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -43,8 +43,6 @@ const MainTabs = () => {
             iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
-          } else if (route.name === 'Admin') {
-            iconName = focused ? 'settings' : 'settings-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -73,9 +71,12 @@ const MainTabs = () => {
         }} 
       />
       <Tab.Screen name="Services" component={ServicesScreen} options={{ title: 'Layanan', headerShown: false }} />
-      <Tab.Screen name="Booking" component={BookingScreen} options={{ title: 'Booking', headerShown: false }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profil', headerShown: false }} />
-      <Tab.Screen name="Admin" component={AdminScreen} options={{ title: 'Admin', headerShown: false }} />
+      {!isGuest && (
+        <>
+          <Tab.Screen name="Booking" component={BookingScreen} options={{ title: 'Booking', headerShown: false }} />
+          <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profil', headerShown: false }} />
+        </>
+      )}
     </Tab.Navigator>
   );
 };
@@ -87,9 +88,44 @@ const AppNavigator = () => {
     return null; // Or a loading screen
   }
 
+  const isAdmin = user?.role === 'admin';
+
   return (
     <NavigationContainer>
-      {user ? <MainTabs /> : <AuthStack />}
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!user ? (
+          // Not logged in - show auth screens
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="MainTabs">
+              {(props) => <MainTabs {...props} isGuest={true} user={null} />}
+            </Stack.Screen>
+          </>
+        ) : isAdmin ? (
+          // Admin logged in - only show admin dashboard
+          <Stack.Screen 
+            name="AdminDashboard" 
+            component={AdminScreen}
+            options={{
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: '#C6A96E',
+              },
+              headerTintColor: '#fff',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+              title: 'Admin Dashboard',
+            }}
+          />
+        ) : (
+          // Regular user logged in - show tabs
+          <Stack.Screen name="MainTabs">
+            {(props) => <MainTabs {...props} isGuest={false} user={user} />}
+          </Stack.Screen>
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
 };

@@ -18,11 +18,15 @@ const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { signIn } = useAuth();
 
   const handleLogin = async () => {
+    // Clear previous error
+    setErrorMessage('');
+    
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setErrorMessage('Email dan password harus diisi');
       return;
     }
 
@@ -31,7 +35,17 @@ const LoginScreen = ({ navigation }) => {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Login Failed', error.message);
+      setErrorMessage(error.message || 'Email atau password salah. Silakan coba lagi.');
+    } else if (data) {
+      // Login berhasil
+      Alert.alert(
+        'Login Berhasil', 
+        `Selamat datang, ${data.user.name || 'User'}!`,
+        [{ text: 'OK' }]
+      );
+      
+      // Navigation akan otomatis dihandle oleh AppNavigator berdasarkan role
+      // Admin akan ke dashboard, User ke home (via MainTabs)
     }
   };
 
@@ -46,6 +60,14 @@ const LoginScreen = ({ navigation }) => {
             <Text style={styles.title}>MASUK</Text>
             <Text style={styles.subtitle}>Selamat datang kembali di Brocode Barbershop</Text>
 
+            {/* Error Message Display */}
+            {errorMessage ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
+                <Text style={styles.errorHint}>Periksa kembali email dan password Anda</Text>
+              </View>
+            ) : null}
+
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <TextInput
@@ -53,7 +75,10 @@ const LoginScreen = ({ navigation }) => {
                 placeholder="Masukkan email Anda"
                 placeholderTextColor={Colors.textMuted}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setErrorMessage(''); // Clear error when user types
+                }}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 editable={!loading}
@@ -67,7 +92,10 @@ const LoginScreen = ({ navigation }) => {
                 placeholder="Masukkan password Anda"
                 placeholderTextColor={Colors.textMuted}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setErrorMessage(''); // Clear error when user types
+                }}
                 secureTextEntry
                 editable={!loading}
               />
@@ -144,6 +172,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
     color: Colors.textDark,
+  },
+  errorContainer: {
+    backgroundColor: '#FFEBEE',
+    borderLeftWidth: 4,
+    borderLeftColor: '#C62828',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  errorText: {
+    color: '#C62828',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  errorHint: {
+    color: '#D32F2F',
+    fontSize: 12,
   },
   input: {
     borderWidth: 1,
