@@ -342,6 +342,9 @@ const BookingScreen = ({ route, navigation }) => {
                   {booking.status?.toUpperCase()}
                 </Text>
               </View>
+              {booking.capsterName && (
+                <Text style={styles.bookingDetail}>👤 Capster: {booking.capsterName}</Text>
+              )}
               <Text style={styles.bookingDetail}>📅 {booking.date}</Text>
               <Text style={styles.bookingDetail}>🕒 {booking.time}</Text>
             </View>

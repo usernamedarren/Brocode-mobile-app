@@ -175,6 +175,30 @@ async function addService({ name, description, price, type }) {
 }
 
 // ===================== Appointments Helpers =====================
+// Helper to enrich appointments with capster names
+async function enrichAppointmentsWithCapsterNames(appointments) {
+  if (!appointments || appointments.length === 0) return appointments
+  
+  try {
+    // Fetch all capsters
+    const capsters = await getCapsters()
+    const capsterMap = {}
+    capsters.forEach(c => {
+      capsterMap[c.id] = c.name || c.alias || 'Unknown'
+    })
+    
+    // Enrich appointments with capster names
+    return appointments.map(apt => ({
+      ...apt,
+      capsterName: capsterMap[apt.capsterId] || 'Unknown'
+    }))
+  } catch (error) {
+    console.error('Error enriching appointments with capster names:', error)
+    // Return original appointments if enrichment fails
+    return appointments
+  }
+}
+
 // Schema appointment: name, email, phone, date, time, service, capsterId, status, notes, timestamp
 async function getAppointments() {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for appointment fetch')
@@ -187,7 +211,8 @@ async function getAppointments() {
     console.error(`Supabase appointment fetch error: ${resp.status}`, errorText)
     throw new Error(`Supabase appointment fetch error: ${resp.status} ${errorText}`)
   }
-  return await resp.json()
+  const appointments = await resp.json()
+  return await enrichAppointmentsWithCapsterNames(appointments)
 }
 
 async function getAppointmentsByUser(userEmail) {
@@ -202,7 +227,8 @@ async function getAppointmentsByUser(userEmail) {
     console.error(`Supabase appointment fetch error: ${resp.status}`, errorText)
     throw new Error(`Supabase appointment fetch error: ${resp.status} ${errorText}`)
   }
-  return await resp.json()
+  const appointments = await resp.json()
+  return await enrichAppointmentsWithCapsterNames(appointments)
 }
 
 async function addAppointment({ name, email, phone, date, time, service, capsterId, status = 'pending', notes, timestamp, user_id, service_id, capster_id, appointment_date, appointment_time }) {
