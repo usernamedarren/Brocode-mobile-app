@@ -182,7 +182,11 @@ async function getAppointments() {
   const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/appointment?select=*`
   if (!fetchImpl) throw new Error('No fetch implementation available')
   const resp = await fetchImpl(url, { method:'GET', headers: buildHeaders() })
-  if (!resp.ok) throw new Error(`Supabase appointment fetch error: ${resp.status}`)
+  if (!resp.ok) {
+    const errorText = await resp.text()
+    console.error(`Supabase appointment fetch error: ${resp.status}`, errorText)
+    throw new Error(`Supabase appointment fetch error: ${resp.status} ${errorText}`)
+  }
   return await resp.json()
 }
 
