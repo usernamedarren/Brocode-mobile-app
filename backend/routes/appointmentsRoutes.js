@@ -15,11 +15,6 @@ const router = express.Router()
  *         schema:
  *           type: string
  *         description: Filter by user email
- *       - in: query
- *         name: user_id
- *         schema:
- *           type: string
- *         description: (Deprecated) Use email parameter instead
  *     responses:
  *       200:
  *         description: List of appointments
