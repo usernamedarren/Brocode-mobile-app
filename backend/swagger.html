@@ -13,19 +13,34 @@
 </head>
 <body>
   <div id="swagger-ui"></div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.min.js"></script>
-  <script>
-    window.onload = function() {
-      SwaggerUIBundle({
-        url: "/api-docs/swagger.json",
-        dom_id: '#swagger-ui',
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        layout: "StandaloneLayout"
-      })
+  
+  <!-- Load scripts with defer to ensure proper order -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.min.js"></script>
+  
+  <script defer>
+    function initSwagger() {
+      if (typeof SwaggerUIBundle !== 'undefined') {
+        SwaggerUIBundle({
+          url: "/api-docs/swagger.json",
+          dom_id: '#swagger-ui',
+          presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIStandalonePreset
+          ],
+          layout: "StandaloneLayout",
+          deepLinking: true
+        })
+      } else {
+        console.error('SwaggerUIBundle is not defined');
+      }
+    }
+    
+    // Wait for scripts to load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSwagger);
+    } else {
+      initSwagger();
     }
   </script>
 </body>
