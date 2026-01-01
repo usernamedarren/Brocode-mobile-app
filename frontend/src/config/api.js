@@ -118,7 +118,7 @@ export const api = {
   // Get user appointments
   getAppointments: async (userId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/appointments?user_id=${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/appointments?email=${encodeURIComponent(userId)}`, {
         method: 'GET',
       });
       
