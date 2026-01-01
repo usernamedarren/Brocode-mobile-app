@@ -1,6 +1,7 @@
 import express from 'express'
-import swaggerUi from 'swagger-ui-express'
 import swaggerSpecs from './swagger.js'
+import path from 'path'
+import { fileURLToPath } from 'url'
 // Import DB so it initializes on server start (connects to Railway when DATABASE_URL is present)
 import db from './db.js'
 // Diagnostic: log key env presence to help debug startup exits (no secrets leaked)
@@ -20,16 +21,7 @@ process.on('exit', (code) => {
     console.log('PROCESS EXIT', code)
 })
 
-// Middleware
-app.use(express.json())
-
-// Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
-  customCss: '.topbar { display: none }',
-  customSiteTitle: 'Barbershop API Docs',
-}))
-
-// Enable CORS for mobile app
+// Enable CORS for mobile app - MUST be first
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*')
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
@@ -38,6 +30,24 @@ app.use((req, res, next) => {
     return res.sendStatus(200)
   }
   next()
+})
+
+// Middleware
+app.use(express.json())
+
+// Get current directory
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// Swagger UI - Serve static HTML file
+app.get('/api-docs', (req, res) => {
+  res.sendFile(path.join(__dirname, 'swagger.html'))
+})
+
+// Serve Swagger JSON
+app.get('/api-docs/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json')
+  res.send(swaggerSpecs)
 })
 
 // Mount API routes
