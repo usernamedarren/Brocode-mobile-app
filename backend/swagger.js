@@ -22,7 +22,7 @@ const options = {
         description: 'Development server',
       },
       {
-        url: 'https://ii3140-uts-pawm-yyvw.vercel.app',
+        url: 'https://brocode-mobile-app.vercel.app',
         description: 'Production server',
       },
     ],
