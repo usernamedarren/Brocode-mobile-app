@@ -1,4 +1,9 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import { fileURLToPath } from 'url'
+import path from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const options = {
   definition: {
@@ -100,11 +105,11 @@ const options = {
     ],
   },
   apis: [
-    './routes/authRoutes.js',
-    './routes/servicesRoutes.js',
-    './routes/capsterRoutes.js',
-    './routes/appointmentsRoutes.js',
-    './routes/accountsRoutes.js',
+    path.join(__dirname, './routes/authRoutes.js'),
+    path.join(__dirname, './routes/servicesRoutes.js'),
+    path.join(__dirname, './routes/capsterRoutes.js'),
+    path.join(__dirname, './routes/appointmentsRoutes.js'),
+    path.join(__dirname, './routes/accountsRoutes.js'),
   ],
 };
 
