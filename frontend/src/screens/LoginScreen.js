@@ -19,11 +19,13 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const { signIn } = useAuth();
 
   const handleLogin = async () => {
-    // Clear previous error
+    // Clear previous messages
     setErrorMessage('');
+    setSuccessMessage('');
     
     if (!email || !password) {
       setErrorMessage('Email dan password harus diisi');
@@ -36,16 +38,24 @@ const LoginScreen = ({ navigation }) => {
 
     if (error) {
       setErrorMessage(error.message || 'Email atau password salah. Silakan coba lagi.');
+      Alert.alert(
+        '❌ Login Gagal', 
+        error.message || 'Email atau password salah. Silakan coba lagi.',
+        [{ text: 'OK', style: 'cancel' }]
+      );
     } else if (data) {
       // Login berhasil
+      setSuccessMessage(`Selamat datang, ${data.user.name || 'User'}!`);
       Alert.alert(
-        'Login Berhasil', 
-        `Selamat datang, ${data.user.name || 'User'}!`,
-        [{ text: 'OK' }]
+        '✅ Login Berhasil', 
+        `Selamat datang kembali, ${data.user.name || 'User'}!`,
+        [{ 
+          text: 'OK',
+          onPress: () => {
+            // Navigation akan otomatis dihandle oleh AppNavigator berdasarkan role
+          }
+        }]
       );
-      
-      // Navigation akan otomatis dihandle oleh AppNavigator berdasarkan role
-      // Admin akan ke dashboard, User ke home (via MainTabs)
     }
   };
 
@@ -63,8 +73,25 @@ const LoginScreen = ({ navigation }) => {
             {/* Error Message Display */}
             {errorMessage ? (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{errorMessage}</Text>
-                <Text style={styles.errorHint}>Periksa kembali email dan password Anda</Text>
+                <View style={styles.errorIconBox}>
+                  <Ionicons name="close-circle" size={28} color="#FFFFFF" />
+                </View>
+                <View style={styles.errorMessageBox}>
+                  <Text style={styles.errorText}>{errorMessage}</Text>
+                  <Text style={styles.errorHint}>Periksa kembali email dan password Anda</Text>
+                </View>
+              </View>
+            ) : null}
+
+            {/* Success Message Display */}
+            {successMessage ? (
+              <View style={styles.successContainer}>
+                <View style={styles.successIconBox}>
+                  <Ionicons name="checkmark-circle" size={28} color="#FFFFFF" />
+                </View>
+                <View style={styles.successMessageBox}>
+                  <Text style={styles.successText}>{successMessage}</Text>
+                </View>
               </View>
             ) : null}
 
@@ -107,7 +134,7 @@ const LoginScreen = ({ navigation }) => {
               disabled={loading}
             >
               <Text style={styles.buttonText}>
-                {loading ? 'MEMUAT...' : 'MASUK'}
+                {loading ? 'MEMPROSES...' : 'MASUK'}
               </Text>
             </TouchableOpacity>
 
@@ -120,9 +147,6 @@ const LoginScreen = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
-      
-      {/* Loading Screen Overlay */}
-      {loading && <LoadingScreen message="Memproses login..." />}
     </KeyboardAvoidingView>
   );
 };
@@ -175,21 +199,82 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     backgroundColor: '#FFEBEE',
-    borderLeftWidth: 4,
-    borderLeftColor: '#C62828',
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 8,
     marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    shadowColor: '#C62828',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 5,
+    borderLeftWidth: 5,
+    borderLeftColor: '#C62828',
+  },
+  errorIconBox: {
+    backgroundColor: '#C62828',
+    borderRadius: 50,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+    flexShrink: 0,
+  },
+  errorMessageBox: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingRight: 4,
   },
   errorText: {
     color: '#C62828',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 4,
   },
   errorHint: {
     color: '#D32F2F',
     fontSize: 12,
+    fontWeight: '500',
+    opacity: 0.9,
+  },
+  successContainer: {
+    backgroundColor: '#E8F5E9',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    shadowColor: '#388E3C',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 5,
+    borderLeftWidth: 5,
+    borderLeftColor: '#388E3C',
+  },
+  successIconBox: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 50,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+    flexShrink: 0,
+  },
+  successMessageBox: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingRight: 4,
+  },
+  successText: {
+    color: '#2E7D32',
+    fontSize: 14,
+    fontWeight: '700',
   },
   input: {
     borderWidth: 1,

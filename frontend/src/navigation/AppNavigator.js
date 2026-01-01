@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'react-native';
 
 // Import screens
 import LoginScreen from '../screens/LoginScreen';
@@ -28,7 +27,7 @@ const AuthStack = () => {
   );
 };
 
-const MainTabs = ({ isGuest, user }) => {
+const MainTabs = ({ isGuest, user, navigation }) => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -49,17 +48,7 @@ const MainTabs = ({ isGuest, user }) => {
         },
         tabBarActiveTintColor: '#8B4513',
         tabBarInactiveTintColor: 'gray',
-        headerShown: true,
-        headerStyle: {
-          backgroundColor: '#C6A96E',
-          height: 100,
-        },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-          fontSize: 18,
-          marginTop: 8,
-        },
+        headerShown: false,
       })}
     >
       <Tab.Screen 
@@ -67,14 +56,13 @@ const MainTabs = ({ isGuest, user }) => {
         component={HomeScreen} 
         options={{ 
           title: 'Beranda',
-          headerShown: false,
         }} 
       />
-      <Tab.Screen name="Services" component={ServicesScreen} options={{ title: 'Layanan', headerShown: false }} />
+      <Tab.Screen name="Services" component={ServicesScreen} options={{ title: 'Layanan' }} />
       {!isGuest && (
         <>
-          <Tab.Screen name="Booking" component={BookingScreen} options={{ title: 'Booking', headerShown: false }} />
-          <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profil', headerShown: false }} />
+          <Tab.Screen name="Booking" component={BookingScreen} options={{ title: 'Booking' }} />
+          <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profil' }} />
         </>
       )}
     </Tab.Navigator>
@@ -94,13 +82,13 @@ const AppNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!user ? (
-          // Not logged in - show auth screens
+          // Not logged in - show home first, with login available
           <>
+            <Stack.Screen name="MainTabs">
+              {({ navigation }) => <MainTabs navigation={navigation} isGuest={true} user={null} />}
+            </Stack.Screen>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name="MainTabs">
-              {(props) => <MainTabs {...props} isGuest={true} user={null} />}
-            </Stack.Screen>
           </>
         ) : isAdmin ? (
           // Admin logged in - only show admin dashboard
@@ -122,7 +110,7 @@ const AppNavigator = () => {
         ) : (
           // Regular user logged in - show tabs
           <Stack.Screen name="MainTabs">
-            {(props) => <MainTabs {...props} isGuest={false} user={user} />}
+            {({ navigation }) => <MainTabs navigation={navigation} isGuest={false} user={user} />}
           </Stack.Screen>
         )}
       </Stack.Navigator>

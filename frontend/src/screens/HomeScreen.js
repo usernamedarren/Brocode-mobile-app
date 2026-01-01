@@ -22,6 +22,7 @@ import { Asset } from 'expo-asset';
 import { Colors, CommonStyles } from '../styles/theme';
 import { api } from '../config/api';
 import { useAuth } from '../context/AuthContext';
+import FloatingHeader from '../components/FloatingHeader';
 
 const { width, height } = Dimensions.get('window');
 
@@ -345,28 +346,13 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <FloatingHeader navigation={navigation} scrollY={scrollY} />
       {!imagesLoaded ? (
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
       ) : (
         <>
-      {/* Custom Header with Logo - Animated */}
-      <Animated.View 
-        style={[
-          styles.customHeader,
-          {
-            opacity: headerOpacity,
-          }
-        ]}
-      >
-        <Image
-          source={require('../../assets/logo.png')}
-          style={styles.headerLogo}
-          resizeMode="contain"
-        />
-      </Animated.View>
-
       {/* Fixed Hero Background with Parallax */}
       <Animated.View
         style={[

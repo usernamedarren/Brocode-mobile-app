@@ -41,12 +41,15 @@ export const AuthProvider = ({ children }) => {
           id: response.user.id || response.user.email,
         };
         
-        // Save to AsyncStorage
-        await AsyncStorage.setItem('authToken', response.token);
-        await AsyncStorage.setItem('user', JSON.stringify(userWithId));
-        
+        // Update state immediately for faster UI response
         setToken(response.token);
         setUser(userWithId);
+        
+        // Save to AsyncStorage in parallel (non-blocking)
+        Promise.all([
+          AsyncStorage.setItem('authToken', response.token),
+          AsyncStorage.setItem('user', JSON.stringify(userWithId))
+        ]).catch(err => console.error('Error saving session:', err));
         
         return { data: response, error: null };
       }

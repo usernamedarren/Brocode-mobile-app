@@ -227,13 +227,17 @@ async function addAppointment({ name, email, phone, date, time, service, capster
   const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/appointment`
   if (!fetchImpl) throw new Error('No fetch implementation available')
   
+  // Use service role key for writes (to bypass RLS if necessary)
   const resp = await fetchImpl(url, { 
     method:'POST', 
     headers: buildHeaders({ write: true, json: true, preferReturn: true }), 
     body: JSON.stringify(appointmentData) 
   })
   const txt = await resp.text()
-  if (!resp.ok) throw new Error(`Supabase appointment insert error: ${resp.status} ${txt}`)
+  if (!resp.ok) {
+    console.error('Appointment insert error response:', resp.status, txt)
+    throw new Error(`Supabase appointment insert error: ${resp.status} ${txt}`)
+  }
   const data = JSON.parse(txt)
   const row = Array.isArray(data) ? data[0] : data
   // Normalize field names
@@ -263,7 +267,11 @@ async function addRiwayatPengguna({ email, name, service, capster, date, time })
   if (!fetchImpl) throw new Error('No fetch implementation available')
   const resp = await fetchImpl(url, { method:'POST', headers: buildHeaders({ write:true, json:true, preferReturn:true }), body: JSON.stringify({ email, name, service, capster, date, time }) })
   const txt = await resp.text()
-  if (!resp.ok) throw new Error(`Supabase riwayat_pengguna insert error: ${resp.status} ${txt}`)
+  if (!resp.ok) {
+    console.warn(`Supabase riwayat_pengguna insert error: ${resp.status} ${txt}`)
+    // Don't throw - this is auxiliary, let it fail silently
+    return null
+  }
   const data = JSON.parse(txt)
   return Array.isArray(data) ? data[0] : data
 }
@@ -275,7 +283,11 @@ async function addListAppointment({ appointment_id, status }){
   if (!fetchImpl) throw new Error('No fetch implementation available')
   const resp = await fetchImpl(url, { method:'POST', headers: buildHeaders({ write:true, json:true, preferReturn:true }), body: JSON.stringify({ appointment_id, status }) })
   const txt = await resp.text()
-  if (!resp.ok) throw new Error(`Supabase list_appointment insert error: ${resp.status} ${txt}`)
+  if (!resp.ok) {
+    console.warn(`Supabase list_appointment insert error: ${resp.status} ${txt}`)
+    // Don't throw - this is auxiliary, let it fail silently
+    return null
+  }
   const data = JSON.parse(txt)
   return Array.isArray(data) ? data[0] : data
 }

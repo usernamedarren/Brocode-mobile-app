@@ -12,9 +12,11 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { Colors } from '../styles/theme';
 import { api } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 // Animated Card Component
 const AnimatedServiceCard = ({ item, index, navigation, shouldAnimate }) => {
+  const { user } = useAuth();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   
@@ -53,15 +55,23 @@ const AnimatedServiceCard = ({ item, index, navigation, shouldAnimate }) => {
         },
       ]}
     >
-      <Text style={styles.serviceName}>{item.name}</Text>
-      <Text style={styles.servicePrice}>Rp {item.price?.toLocaleString('id-ID')}</Text>
-      <Text style={styles.serviceDescription}>{item.description}</Text>
-      {item.duration && (
-        <Text style={styles.serviceDuration}>⏱️ {item.duration} menit</Text>
-      )}
+      <View style={styles.cardContent}>
+        <Text style={styles.serviceName}>{item.name}</Text>
+        <Text style={styles.servicePrice}>Rp {item.price?.toLocaleString('id-ID')}</Text>
+        <Text style={styles.serviceDescription} numberOfLines={3}>{item.description}</Text>
+        {item.duration && (
+          <Text style={styles.serviceDuration}>⏱️ {item.duration} menit</Text>
+        )}
+      </View>
       <TouchableOpacity
         style={styles.bookButton}
-        onPress={() => navigation.navigate('Booking', { serviceId: item.id })}
+        onPress={() => {
+          if (user) {
+            navigation.navigate('Booking', { serviceId: item.id });
+          } else {
+            navigation.navigate('Login');
+          }
+        }}
       >
         <Text style={styles.bookButtonText}>BOOKING</Text>
       </TouchableOpacity>
@@ -195,34 +205,43 @@ const styles = StyleSheet.create({
     padding: 20,
     margin: 8,
     minWidth: 150,
+    minHeight: 220,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    justifyContent: 'space-between',
+  },
+  cardContent: {
+    flex: 1,
   },
   serviceName: {
     fontSize: 18,
     fontWeight: '700',
     color: Colors.textDark,
     marginBottom: 8,
+    minHeight: 24,
   },
   servicePrice: {
     fontSize: 16,
     fontWeight: '600',
     color: Colors.accentColor,
     marginBottom: 12,
+    minHeight: 20,
   },
   serviceDescription: {
     fontSize: 14,
     color: Colors.textMuted,
     lineHeight: 20,
     marginBottom: 12,
+    flex: 1,
   },
   serviceDuration: {
     fontSize: 12,
     color: Colors.textMuted,
     marginBottom: 16,
+    minHeight: 18,
   },
   bookButton: {
     backgroundColor: Colors.accentColor,

@@ -73,6 +73,26 @@ app.get('/', (req, res) => {
     })
 })
 
+// Diagnostic endpoint to check Supabase configuration
+app.get('/api/health', (req, res) => {
+    const hasSupabaseUrl = !!process.env.SUPABASE_URL
+    const hasAnonKey = !!process.env.SUPABASE_ANON_KEY
+    const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    res.json({
+        status: 'ok',
+        supabase: {
+            urlConfigured: hasSupabaseUrl,
+            anonKeyConfigured: hasAnonKey,
+            serviceKeyConfigured: hasServiceKey,
+            readyForWrites: hasSupabaseUrl && hasAnonKey && hasServiceKey
+        },
+        message: !hasSupabaseUrl || !hasAnonKey 
+            ? 'Missing Supabase env vars. Set SUPABASE_URL and SUPABASE_ANON_KEY (and preferably SUPABASE_SERVICE_ROLE_KEY for writes)'
+            : 'Supabase configured and ready'
+    })
+})
+
 // In Vercel serverless, we don't start a listener. Vercel sets VERCEL=1.
 if (!process.env.VERCEL) {
     try {

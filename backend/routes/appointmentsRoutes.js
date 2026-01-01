@@ -83,6 +83,8 @@ router.post(['/appointment', '/appointments'], async (req, res) => {
   try {
     const payload = req.body || {}
     
+    console.log('POST /api/appointments - payload:', JSON.stringify(payload, null, 2))
+    
     // Support both mobile app format and web format
     const appointmentData = {
       name: payload.name,
@@ -99,8 +101,15 @@ router.post(['/appointment', '/appointments'], async (req, res) => {
       status: payload.status || 'pending'
     }
     
+    console.log('Processed appointment data:', JSON.stringify(appointmentData, null, 2))
+    
     const row = await db.addAppointment(appointmentData)
-    if (!row) return res.status(500).json({ error: 'Failed to create appointment' })
+    if (!row) {
+      console.error('addAppointment returned null or falsy')
+      return res.status(500).json({ error: 'Failed to create appointment' })
+    }
+    
+    console.log('Appointment created successfully:', JSON.stringify(row, null, 2))
 
     // Best-effort auxiliary inserts (do not block response)
     ;(async () => {
@@ -125,7 +134,7 @@ router.post(['/appointment', '/appointments'], async (req, res) => {
 
     return res.status(201).json({ data: row })
   } catch (err) {
-    console.error('POST /api/appointments error', err && err.message)
+    console.error('POST /api/appointments error', err && err.message, err && err.stack)
     // Surface Supabase error message to client to ease debugging
     return res.status(500).json({ error: err?.message || 'Server error' })
   }
