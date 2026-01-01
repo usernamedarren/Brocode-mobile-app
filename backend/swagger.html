@@ -1,19 +1,50 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Barbershop API Documentation</title>
-    <meta charset="utf-8"/>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Barbershop API</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css">
     <style>
+      html {
+        box-sizing: border-box;
+        overflow: -moz-scrollbars-vertical;
+        overflow-y: scroll;
+      }
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
       body {
         margin: 0;
         padding: 0;
+        background: #fafafa;
       }
     </style>
   </head>
   <body>
-    <redoc spec-url='/api-docs/swagger.json'></redoc>
-    <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"></script>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui.js" charset="UTF-8"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+    <script>
+      window.onload = function() {
+        // Build a system
+        const ui = SwaggerUIBundle({
+          url: "/api-docs/swagger.json",
+          dom_id: '#swagger-ui',
+          deepLinking: true,
+          presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIStandalonePreset
+          ],
+          plugins: [
+            SwaggerUIBundle.plugins.DownloadUrl
+          ],
+          layout: "StandaloneLayout"
+        })
+        window.ui = ui
+      }
+    </script>
   </body>
 </html>

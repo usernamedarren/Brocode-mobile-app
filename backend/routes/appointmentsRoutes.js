@@ -3,6 +3,33 @@ import db from '../db.js'
 
 const router = express.Router()
 
+/**
+ * @swagger
+ * /api/appointments:
+ *   get:
+ *     summary: Get all appointments (or filter by user)
+ *     tags: [Appointments]
+ *     parameters:
+ *       - in: query
+ *         name: user_id
+ *         schema:
+ *           type: integer
+ *         description: Filter by user ID
+ *     responses:
+ *       200:
+ *         description: List of appointments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Appointment'
+ *       500:
+ *         description: Server error
+ */
 // GET /api/appointment (singular) or /api/appointments (plural)
 router.get(['/appointment', '/appointments'], async (req, res) => {
   try {
@@ -26,6 +53,31 @@ router.get(['/appointment', '/appointments'], async (req, res) => {
   }
 })
 
+/**
+ * @swagger
+ * /api/appointments:
+ *   post:
+ *     summary: Create new appointment
+ *     tags: [Appointments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Appointment'
+ *     responses:
+ *       201:
+ *         description: Appointment created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Appointment'
+ *       500:
+ *         description: Server error
+ */
 // POST /api/appointment or /api/appointments
 router.post(['/appointment', '/appointments'], async (req, res) => {
   try {

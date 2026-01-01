@@ -3,6 +3,27 @@ import db from '../db.js'
 
 const router = express.Router()
 
+/**
+ * @swagger
+ * /api/services:
+ *   get:
+ *     summary: Get all services
+ *     tags: [Services]
+ *     responses:
+ *       200:
+ *         description: List of services
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Service'
+ *       500:
+ *         description: Server error
+ */
 // GET /api/service or /api/services
 router.get(['/service', '/services'], async (req, res) => {
   try {
@@ -14,6 +35,31 @@ router.get(['/service', '/services'], async (req, res) => {
   }
 })
 
+/**
+ * @swagger
+ * /api/service:
+ *   post:
+ *     summary: Create new service
+ *     tags: [Services]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Service'
+ *     responses:
+ *       201:
+ *         description: Service created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Service'
+ *       500:
+ *         description: Server error
+ */
 // POST /api/service
 router.post('/service', async (req, res) => {
   try {

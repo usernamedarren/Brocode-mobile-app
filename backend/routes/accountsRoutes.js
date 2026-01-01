@@ -3,6 +3,34 @@ import db from '../db.js'
 
 const router = express.Router()
 
+/**
+ * @swagger
+ * /api/account:
+ *   post:
+ *     summary: Create new account
+ *     tags: [Accounts]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Account created
+ *       400:
+ *         description: Missing email or password
+ *       500:
+ *         description: Server error
+ */
 // POST /api/account - create account { email, password }
 router.post('/account', async (req, res) => {
   try {
@@ -19,6 +47,26 @@ router.post('/account', async (req, res) => {
   }
 })
 
+/**
+ * @swagger
+ * /api/account:
+ *   get:
+ *     summary: Get account by email
+ *     tags: [Accounts]
+ *     parameters:
+ *       - in: query
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Account found
+ *       400:
+ *         description: Missing email parameter
+ *       500:
+ *         description: Server error
+ */
 // GET /api/accounts?email=abc - find account by email (dev)
 router.get('/account', async (req, res) => {
   try {
