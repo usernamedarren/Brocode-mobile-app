@@ -7,14 +7,19 @@ const router = express.Router()
  * @swagger
  * /api/appointments:
  *   get:
- *     summary: Get all appointments (or filter by user)
+ *     summary: Get all appointments (or filter by user email)
  *     tags: [Appointments]
  *     parameters:
  *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *         description: Filter by user email
+ *       - in: query
  *         name: user_id
  *         schema:
- *           type: integer
- *         description: Filter by user ID
+ *           type: string
+ *         description: (Deprecated) Use email parameter instead
  *     responses:
  *       200:
  *         description: List of appointments
