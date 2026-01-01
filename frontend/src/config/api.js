@@ -137,6 +137,27 @@ export const api = {
     }
   },
 
+  // Get all appointments (for admin)
+  getAllAppointments: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/appointments`, {
+        method: 'GET',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('All appointments fetch error:', response.status, errorText);
+        throw new Error(`Failed to fetch all appointments: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('getAllAppointments error:', error);
+      throw error;
+    }
+  },
+
   // Legacy method for compatibility
   getUserAppointments: async (token) => {
     const response = await fetch(`${API_BASE_URL}/api/appointments/user`, {

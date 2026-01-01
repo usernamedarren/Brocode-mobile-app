@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../config/supabase';
+import { api } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 
 const AdminScreen = () => {
@@ -43,23 +43,16 @@ const AdminScreen = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch all appointments
-      const { data: appointmentsData } = await supabase
-        .from('appointments')
-        .select(`
-          *,
-          services (name),
-          capster (name),
-          accounts (name, email)
-        `)
-        .order('created_at', { ascending: false });
+      // Fetch all appointments using API
+      const appointmentsRes = await api.getAllAppointments();
+      const appointmentsData = appointmentsRes?.data || [];
 
-      setAppointments(appointmentsData || []);
+      setAppointments(appointmentsData);
 
       // Calculate stats
-      const total = appointmentsData?.length || 0;
-      const pending = appointmentsData?.filter(a => a.status === 'pending').length || 0;
-      const confirmed = appointmentsData?.filter(a => a.status === 'confirmed').length || 0;
+      const total = appointmentsData.length;
+      const pending = appointmentsData.filter(a => a.status === 'pending').length;
+      const confirmed = appointmentsData.filter(a => a.status === 'confirmed' || a.status === 'approved').length;
 
       setStats({
         totalAppointments: total,
@@ -67,19 +60,13 @@ const AdminScreen = () => {
         confirmedAppointments: confirmed,
       });
 
-      // Fetch services
-      const { data: servicesData } = await supabase
-        .from('services')
-        .select('*')
-        .order('name', { ascending: true });
-      setServices(servicesData || []);
+      // Fetch services using API
+      const servicesRes = await api.getServices();
+      setServices(servicesRes?.data || []);
 
-      // Fetch capsters
-      const { data: capstersData } = await supabase
-        .from('capster')
-        .select('*')
-        .order('name', { ascending: true });
-      setCapsters(capstersData || []);
+      // Fetch capsters using API
+      const capstersRes = await api.getCapsters();
+      setCapsters(capstersRes?.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -135,23 +122,26 @@ const AdminScreen = () => {
           appointments.slice(0, 10).map((appointment) => (
             <View key={appointment.id} style={styles.appointmentCard}>
               <Text style={styles.appointmentCustomer}>
-                {appointment.accounts?.name || 'Unknown'}
+                {appointment.name || 'Unknown'}
               </Text>
               <Text style={styles.appointmentDetail}>
-                Service: {appointment.services?.name || 'N/A'}
+                Email: {appointment.email || 'N/A'}
               </Text>
               <Text style={styles.appointmentDetail}>
-                Barber: {appointment.capster?.name || 'N/A'}
+                Service: {appointment.service || 'N/A'}
               </Text>
               <Text style={styles.appointmentDetail}>
-                Date: {appointment.appointment_date} at {appointment.appointment_time}
+                Phone: {appointment.phone || 'N/A'}
+              </Text>
+              <Text style={styles.appointmentDetail}>
+                Date: {appointment.date} at {appointment.time}
               </Text>
               <View
                 style={[
                   styles.statusBadge,
-                  appointment.status === 'confirmed' && styles.statusConfirmed,
+                  (appointment.status === 'confirmed' || appointment.status === 'approved') && styles.statusConfirmed,
                   appointment.status === 'pending' && styles.statusPending,
-                  appointment.status === 'cancelled' && styles.statusCancelled,
+                  (appointment.status === 'cancelled' || appointment.status === 'not approved') && styles.statusCancelled,
                 ]}
               >
                 <Text style={styles.statusText}>

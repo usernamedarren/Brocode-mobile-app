@@ -104,26 +104,28 @@ const ProfileScreen = ({ navigation }) => {
             <View key={`booking-profile-${booking.id || `idx-${index}`}-${booking.date || index}`} style={styles.bookingCard}>
               <View style={styles.bookingHeader}>
                 <Text style={styles.bookingService}>
-                  {booking.service?.name || booking.service || 'Service'}
+                  {booking.service || 'Service'}
                 </Text>
                 <Text style={[
                   styles.bookingStatus,
-                  booking.status === 'confirmed' && styles.statusConfirmed,
+                  (booking.status === 'confirmed' || booking.status === 'approved') && styles.statusConfirmed,
                   booking.status === 'completed' && styles.statusCompleted,
-                  booking.status === 'cancelled' && styles.statusCancelled,
+                  (booking.status === 'cancelled' || booking.status === 'not approved') && styles.statusCancelled,
                 ]}>
                   {booking.status?.toUpperCase()}
                 </Text>
               </View>
               <Text style={styles.bookingDetail}>
-                👤 Capster: {booking.capster?.name || booking.capster || 'N/A'}
+                📅 {booking.date}
               </Text>
               <Text style={styles.bookingDetail}>
-                📅 {booking.appointment_date || booking.date}
+                🕒 {booking.time}
               </Text>
-              <Text style={styles.bookingDetail}>
-                🕒 {booking.appointment_time || booking.time}
-              </Text>
+              {booking.notes && (
+                <Text style={styles.bookingDetail}>
+                  📝 {booking.notes}
+                </Text>
+              )}
             </View>
           ))
         ) : (
