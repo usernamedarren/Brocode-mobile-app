@@ -90,14 +90,15 @@ async function createAccount({ email, password, name, phone, isAdmin = false }) 
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for account create')
   const hash = await bcrypt.hash(password, 10)
-  // User's schema: table "account" with fields: email, password, isAdmin
-  // Note: name and phone are accepted but not stored (table doesn't have these columns yet)
+  // User's schema: table "account" with fields: email, password, isAdmin, name, phone
   const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/account`
   if (!fetchImpl) throw new Error('No fetch implementation available')
   const payload = { 
     email, 
     password: hash, 
-    isAdmin: !!isAdmin
+    isAdmin: !!isAdmin,
+    name: name || null,
+    phone: phone || null
   }
   
   const resp = await fetchImpl(url, { method: 'POST', headers: buildHeaders({ write: true, json: true, preferReturn: true }), body: JSON.stringify(payload) })
@@ -109,7 +110,14 @@ async function createAccount({ email, password, name, phone, isAdmin = false }) 
   }
   const data = JSON.parse(bodyText)
   const row = Array.isArray(data) ? data[0] : data
-  return { id: row.id, email: row.email, is_admin: !!(row.is_admin ?? row.isAdmin), created_at: row.created_at }
+  return { 
+    id: row.id, 
+    email: row.email, 
+    name: row.name,
+    phone: row.phone,
+    is_admin: !!(row.is_admin ?? row.isAdmin), 
+    created_at: row.created_at 
+  }
 }
 
 // Find account by email, returns full row including password_hash (for auth internal).

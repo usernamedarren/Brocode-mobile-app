@@ -68,11 +68,11 @@ const ProfileScreen = ({ navigation }) => {
         <View style={styles.avatarContainer}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
-              {user?.email?.[0]?.toUpperCase() || 'U'}
+              {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
             </Text>
           </View>
         </View>
-        <Text style={styles.userName}>{user?.email || 'User'}</Text>
+        <Text style={styles.userName}>{user?.name || user?.email?.split('@')[0] || 'User'}</Text>
         <Text style={styles.userEmail}>{user?.email}</Text>
       </View>
 
@@ -81,18 +81,25 @@ const ProfileScreen = ({ navigation }) => {
         <Text style={styles.cardTitle}>INFORMASI PROFIL</Text>
         
         <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Nama</Text>
+          <Text style={styles.infoValue}>{user?.name || '-'}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Email</Text>
           <Text style={styles.infoValue}>{user?.email || '-'}</Text>
         </View>
 
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>ID</Text>
-          <Text style={styles.infoValue}>{user?.id || '-'}</Text>
+          <Text style={styles.infoLabel}>Nomor Telepon</Text>
+          <Text style={styles.infoValue}>{user?.phone || '-'}</Text>
         </View>
 
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Role</Text>
-          <Text style={styles.infoValue}>{user?.role || 'User'}</Text>
+          <Text style={styles.infoValue}>
+            {user?.role === 'admin' ? 'Administrator' : 'Pengguna'}
+          </Text>
         </View>
       </View>
 
