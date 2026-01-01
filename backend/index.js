@@ -57,11 +57,14 @@ import servicesRoutes from './routes/servicesRoutes.js'
 import appointmentsRoutes from './routes/appointmentsRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 
+// Log route mounting for debugging
+console.log('[ROUTES] Mounting API routes...')
 app.use('/api', capsterRoutes)
 app.use('/api', accountsRoutes)
 app.use('/api', servicesRoutes)
 app.use('/api', appointmentsRoutes)
 app.use('/api', authRoutes)
+console.log('[ROUTES] All routes mounted successfully')
 
 // Health check endpoint
 app.get('/', (req, res) => {
@@ -71,6 +74,29 @@ app.get('/', (req, res) => {
         documentation: '/api-docs',
         info: 'See /api-docs for full API documentation'
     })
+})
+
+// Debug endpoint to list all registered routes
+app.get('/api/routes', (req, res) => {
+    const routes = []
+    app._router.stack.forEach((middleware) => {
+        if (middleware.route) {
+            routes.push({
+                path: middleware.route.path,
+                methods: Object.keys(middleware.route.methods)
+            })
+        } else if (middleware.name === 'router') {
+            middleware.handle.stack.forEach((handler) => {
+                if (handler.route) {
+                    routes.push({
+                        path: handler.route.path,
+                        methods: Object.keys(handler.route.methods)
+                    })
+                }
+            })
+        }
+    })
+    res.json({ routes })
 })
 
 // Diagnostic endpoint to check Supabase configuration

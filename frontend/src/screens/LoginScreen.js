@@ -9,7 +9,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, CommonStyles } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
 import LoadingScreen from '../components/LoadingScreen';
@@ -70,13 +72,21 @@ const LoginScreen = ({ navigation }) => {
             <Text style={styles.title}>MASUK</Text>
             <Text style={styles.subtitle}>Selamat datang kembali di Brocode Barbershop</Text>
 
+            {/* Loading Card Display */}
+            {loading ? (
+              <View style={styles.loadingCard}>
+                <ActivityIndicator size="large" color={Colors.accentColor} style={styles.loadingSpinner} />
+                <Text style={styles.loadingText}>Memproses login...</Text>
+              </View>
+            ) : null}
+
             {/* Error Message Display */}
-            {errorMessage ? (
-              <View style={styles.errorContainer}>
+            {!loading && errorMessage ? (
+              <View style={styles.messageCard}>
                 <View style={styles.errorIconBox}>
-                  <Ionicons name="close-circle" size={28} color="#FFFFFF" />
+                  <Ionicons name="close-circle" size={32} color="#FFFFFF" />
                 </View>
-                <View style={styles.errorMessageBox}>
+                <View style={styles.messageContent}>
                   <Text style={styles.errorText}>{errorMessage}</Text>
                   <Text style={styles.errorHint}>Periksa kembali email dan password Anda</Text>
                 </View>
@@ -84,12 +94,12 @@ const LoginScreen = ({ navigation }) => {
             ) : null}
 
             {/* Success Message Display */}
-            {successMessage ? (
-              <View style={styles.successContainer}>
+            {!loading && successMessage ? (
+              <View style={styles.messageCard}>
                 <View style={styles.successIconBox}>
-                  <Ionicons name="checkmark-circle" size={28} color="#FFFFFF" />
+                  <Ionicons name="checkmark-circle" size={32} color="#FFFFFF" />
                 </View>
-                <View style={styles.successMessageBox}>
+                <View style={styles.messageContent}>
                   <Text style={styles.successText}>{successMessage}</Text>
                 </View>
               </View>
@@ -197,84 +207,79 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     color: Colors.textDark,
   },
-  errorContainer: {
-    backgroundColor: '#FFEBEE',
-    borderRadius: 12,
-    padding: 16,
+  loadingCard: {
+    backgroundColor: Colors.cardBg,
+    padding: 24,
+    borderRadius: 16,
     marginBottom: 20,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    shadowColor: '#C62828',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 5,
-    borderLeftWidth: 5,
-    borderLeftColor: '#C62828',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  loadingSpinner: {
+    marginBottom: 12,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.textDark,
+    textAlign: 'center',
+    letterSpacing: 1,
+  },
+  messageCard: {
+    backgroundColor: Colors.cardBg,
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
   },
   errorIconBox: {
     backgroundColor: '#C62828',
     borderRadius: 50,
-    width: 44,
-    height: 44,
+    width: 56,
+    height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 2,
-    flexShrink: 0,
-  },
-  errorMessageBox: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingRight: 4,
-  },
-  errorText: {
-    color: '#C62828',
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  errorHint: {
-    color: '#D32F2F',
-    fontSize: 12,
-    fontWeight: '500',
-    opacity: 0.9,
-  },
-  successContainer: {
-    backgroundColor: '#E8F5E9',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    shadowColor: '#388E3C',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 5,
-    borderLeftWidth: 5,
-    borderLeftColor: '#388E3C',
+    marginBottom: 16,
   },
   successIconBox: {
     backgroundColor: '#4CAF50',
     borderRadius: 50,
-    width: 44,
-    height: 44,
+    width: 56,
+    height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 2,
-    flexShrink: 0,
+    marginBottom: 16,
   },
-  successMessageBox: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingRight: 4,
+  messageContent: {
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#C62828',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  errorHint: {
+    color: Colors.textMuted,
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   successText: {
     color: '#2E7D32',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
+    textAlign: 'center',
   },
   input: {
     borderWidth: 1,
