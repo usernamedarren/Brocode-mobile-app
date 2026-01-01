@@ -4,7 +4,7 @@
   <title>Barbershop API Documentation</title>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css">
   <style>
     html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
     *, *:before, *:after { box-sizing: inherit; }
@@ -14,33 +14,26 @@
 <body>
   <div id="swagger-ui"></div>
   
-  <!-- Load scripts with defer to ensure proper order -->
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.min.js"></script>
-  
-  <script defer>
-    function initSwagger() {
-      if (typeof SwaggerUIBundle !== 'undefined') {
-        SwaggerUIBundle({
-          url: "/api-docs/swagger.json",
-          dom_id: '#swagger-ui',
-          presets: [
-            SwaggerUIBundle.presets.apis,
-            SwaggerUIStandalonePreset
-          ],
-          layout: "StandaloneLayout",
-          deepLinking: true
-        })
-      } else {
-        console.error('SwaggerUIBundle is not defined');
-      }
-    }
-    
-    // Wait for scripts to load
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initSwagger);
-    } else {
-      initSwagger();
+  <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui.js"></script>
+  <script>
+    window.onload = function() {
+      const ui = SwaggerUIBundle({
+        url: "/api-docs/swagger.json",
+        dom_id: '#swagger-ui',
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIBundle.SwaggerUIStandalonePreset
+        ],
+        layout: "BaseLayout",
+        deepLinking: true,
+        onComplete: function() {
+          console.log("Swagger UI loaded successfully");
+        },
+        onFailure: function(error) {
+          console.error("Failed to load Swagger UI:", error);
+        }
+      });
+      window.ui = ui;
     }
   </script>
 </body>
