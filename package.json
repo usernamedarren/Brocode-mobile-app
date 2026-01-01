@@ -2,10 +2,10 @@
   "name": "mobile-backend",
   "version": "1.0.0",
   "description": "Backend API for mobile barbershop app",
-  "main": "src/server.js",
+  "main": "backend/index.js",
   "scripts": {
-    "dev": "node --watch --env-file=.env ./src/server.js",
-    "start": "node ./src/server.js",
+    "dev": "cd backend && npm run dev",
+    "start": "node ./backend/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["api", "mobile", "backend"],
