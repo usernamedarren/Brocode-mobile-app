@@ -199,7 +199,7 @@ export const api = {
   },
 
   // Get appointments for a specific date/capster (used for slot availability)
-  getAppointmentsByDate: async ({ date, capsterId, statuses = ['approved', 'confirmed'] }) => {
+  getAppointmentsByDate: async ({ date, capsterId, statuses = ['pending', 'approved'] }) => {
     if (!date) throw new Error('date is required')
 
     const query = new URLSearchParams({ date })

@@ -40,24 +40,14 @@ const LoginScreen = ({ navigation }) => {
 
     if (error) {
       setErrorMessage(error.message || 'Email atau password salah. Silakan coba lagi.');
-      Alert.alert(
-        '❌ Login Gagal', 
-        error.message || 'Email atau password salah. Silakan coba lagi.',
-        [{ text: 'OK', style: 'cancel' }]
-      );
     } else if (data) {
-      // Login berhasil
+      // Login berhasil - show success message briefly
       setSuccessMessage(`Selamat datang, ${data.user.name || 'User'}!`);
-      Alert.alert(
-        '✅ Login Berhasil', 
-        `Selamat datang kembali, ${data.user.name || 'User'}!`,
-        [{ 
-          text: 'OK',
-          onPress: () => {
-            // Navigation akan otomatis dihandle oleh AppNavigator berdasarkan role
-          }
-        }]
-      );
+      // Auto-hide success message and navigate after 1.2 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+        // Navigation akan otomatis dihandle oleh AppNavigator berdasarkan role
+      }, 1200);
     }
   };
 

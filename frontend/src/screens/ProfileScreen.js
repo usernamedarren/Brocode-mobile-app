@@ -18,6 +18,7 @@ const ProfileScreen = ({ navigation }) => {
   const [bookings, setBookings] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [logoutSuccessVisible, setLogoutSuccessVisible] = useState(false);
   const { user, signOut } = useAuth();
 
   const fetchBookings = async () => {
@@ -52,8 +53,14 @@ const ProfileScreen = ({ navigation }) => {
 
   const confirmLogout = async () => {
     setLogoutModalVisible(false);
+    setLogoutSuccessVisible(true);
+    
     await signOut();
-    navigation.getParent()?.navigate('Login');
+    
+    // Hide success message after 1.5 seconds, then AppNavigator handles navigation
+    setTimeout(() => {
+      setLogoutSuccessVisible(false);
+    }, 1500);
   };
 
   return (
@@ -196,6 +203,27 @@ const ProfileScreen = ({ navigation }) => {
                 <Text style={styles.modalButtonTextConfirm}>Keluar</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Logout Success Modal */}
+      <Modal
+        visible={logoutSuccessVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setLogoutSuccessVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.successContainer}>
+            <View style={styles.successIconContainer}>
+              <Ionicons name="checkmark-circle" size={64} color="#4CAF50" />
+            </View>
+            
+            <Text style={styles.successTitle}>Logout Berhasil</Text>
+            <Text style={styles.successMessage}>
+              Terima kasih telah menggunakan layanan kami!
+            </Text>
           </View>
         </View>
       </Modal>
@@ -459,6 +487,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: Colors.textLight,
+  },
+  successContainer: {
+    backgroundColor: Colors.cardBg,
+    borderRadius: 20,
+    padding: 32,
+    width: '85%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  successIconContainer: {
+    marginBottom: 20,
+  },
+  successTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#2E7D32',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  successMessage: {
+    fontSize: 15,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });
 

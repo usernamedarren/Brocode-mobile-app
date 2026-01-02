@@ -132,9 +132,7 @@ async function createAccount({ email, password, name, phone, isAdmin = false }) 
   const payload = { 
     email, 
     password: hash, 
-    isAdmin: !!isAdmin,
-    name: name || null,
-    phone: phone || null
+    isAdmin: !!isAdmin
   }
   
   const resp = await fetchImpl(url, { method: 'POST', headers: buildHeaders({ write: true, json: true, preferReturn: true }), body: JSON.stringify(payload) })
@@ -147,12 +145,8 @@ async function createAccount({ email, password, name, phone, isAdmin = false }) 
   const data = JSON.parse(bodyText)
   const row = Array.isArray(data) ? data[0] : data
   return { 
-    id: row.id, 
     email: row.email, 
-    name: row.name,
-    phone: row.phone,
-    is_admin: !!(row.is_admin ?? row.isAdmin), 
-    created_at: row.created_at 
+    isAdmin: !!(row.is_admin ?? row.isAdmin)
   }
 }
 
@@ -353,14 +347,12 @@ async function getAppointmentsByUser(userEmail) {
 async function addAppointment({ name, email, phone, date, time, service, capsterId, status = 'pending', notes, timestamp, user_id, service_id, appointment_date, appointment_time }) {
   // Support both web and mobile formats
   const appointmentData = {
-    user_id: user_id || null,
     name: name || null,
     email: email || null,
     phone: phone || null,
     date: date || appointment_date,
     time: time || appointment_time,
     service: service || null,
-    service_id: service_id || null,
     capsterId: capsterId || null,
     status: (status && ALLOWED_APPOINTMENT_STATUSES.includes(String(status).toLowerCase()))
       ? String(status).toLowerCase()
@@ -409,14 +401,12 @@ async function addAppointment({ name, email, phone, date, time, service, capster
   // Normalize field names
   return { 
     id: row.id, 
-    user_id: row.user_id,
     name: row.name, 
     email: row.email, 
     phone: row.phone, 
     date: row.date, 
     time: row.time, 
     service: row.service,
-    service_id: row.service_id,
     capsterId: row.capsterId, 
     status: row.status, 
     notes: row.notes, 

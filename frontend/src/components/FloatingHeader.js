@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 
 const FloatingHeader = ({ navigation, scrollY }) => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const isGuest = !user;
   const [headerAnim] = useState(new Animated.Value(0));
 
@@ -21,11 +21,12 @@ const FloatingHeader = ({ navigation, scrollY }) => {
     return () => scrollY.removeListener(listener);
   }, [scrollY, headerAnim]);
 
-  const handleAuthAction = () => {
+  const handleAuthAction = async () => {
     if (isGuest) {
       navigation.navigate('Login');
     } else {
-      logout();
+      await signOut();
+      // AppNavigator will automatically show Login screen
     }
   };
 

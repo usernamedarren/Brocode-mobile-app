@@ -196,7 +196,7 @@ const BookingScreen = ({ route, navigation }) => {
       console.error('User object is null or undefined');
       Alert.alert('Error', 'Sesi login telah berakhir. Silakan login kembali.');
       await signOut?.();
-      navigation.getParent()?.navigate('Login');
+      // AppNavigator will automatically show Login screen
       return;
     }
     
@@ -205,7 +205,7 @@ const BookingScreen = ({ route, navigation }) => {
       console.error('User object exists but ID is missing:', user);
       Alert.alert('Error', 'Data user tidak lengkap. Silakan login kembali.');
       await signOut?.();
-      navigation.getParent()?.navigate('Login');
+      // AppNavigator will automatically show Login screen
       return;
     }
     
@@ -221,7 +221,7 @@ const BookingScreen = ({ route, navigation }) => {
     }
 
     if (!selectedCapster) {
-      Alert.alert('Error', 'Mohon pilih capster agar jadwal dapat dicek.');
+      Alert.alert('Error', 'Pilih capster wajib! Mohon pilih capster untuk melanjutkan.');
       return;
     }
 
@@ -241,13 +241,12 @@ const BookingScreen = ({ route, navigation }) => {
       const appointmentTime = selectedTimeSlot;
       
       const appointmentData = {
-        user_id: user.id,
         name: user.name,
         email: user.email,
         phone: user.phone || '',
         service: selectedService.name,
         capster: selectedCapster?.name || selectedCapster?.alias || '',
-        capsterId: selectedCapster?.id || null,
+        capsterId: selectedCapster.id,
         date: appointmentDate,
         time: appointmentTime,
         status: 'pending',
@@ -530,31 +529,11 @@ const BookingScreen = ({ route, navigation }) => {
           />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Pilih Capster (Opsional)</Text>
+              <Text style={styles.modalTitle}>Pilih Capster (Wajib)</Text>
               <TouchableOpacity onPress={() => setShowCapsterModal(false)}>
                 <Text style={styles.modalClose}>✕</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={[
-                styles.modalItem,
-                !selectedCapster && styles.modalItemSelected
-              ]}
-              onPress={() => {
-                setSelectedCapster(null);
-                setShowCapsterModal(false);
-              }}
-            >
-              <Text style={[
-                styles.modalItemText,
-                !selectedCapster && styles.modalItemTextSelected
-              ]}>
-                Tidak memilih capster
-              </Text>
-              {!selectedCapster && (
-                <Text style={styles.checkMark}>✓</Text>
-              )}
-            </TouchableOpacity>
             <FlatList
               data={capsters}
               keyExtractor={(item, index) => `capster-modal-${item.id || index}-${Math.random()}`}

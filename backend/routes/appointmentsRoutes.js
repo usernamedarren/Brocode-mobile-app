@@ -53,7 +53,7 @@ router.get(['/appointment', '/appointments'], async (req, res) => {
     } else if (date) {
       const statusList = typeof statuses === 'string' && statuses.length
         ? statuses.split(',').map((s) => s.trim()).filter(Boolean)
-        : ['approved']
+        : ['pending', 'approved']
       rows = await db.getAppointmentsByDate({ date, capsterId, statuses: statusList })
     } else {
       rows = await db.getAppointments()
