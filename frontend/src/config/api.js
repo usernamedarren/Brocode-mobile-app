@@ -77,6 +77,89 @@ export const api = {
     return response.json();
   },
 
+  // Create capster
+  createCapster: async (payload) => {
+    const resp = await fetch(`${API_BASE_URL}/api/capster`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const txt = await resp.text()
+    if (!resp.ok) throw new Error(txt || 'Failed to create capster')
+    return JSON.parse(txt)
+  },
+
+  updateCapster: async (id, payload) => {
+    const resp = await fetch(`${API_BASE_URL}/api/capster/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const txt = await resp.text()
+    if (!resp.ok) throw new Error(txt || 'Failed to update capster')
+    return JSON.parse(txt || '{}')
+  },
+
+  deleteCapster: async (id) => {
+    const resp = await fetch(`${API_BASE_URL}/api/capster/${id}`, { method: 'DELETE' })
+    if (!resp.ok) {
+      const txt = await resp.text()
+      throw new Error(txt || 'Failed to delete capster')
+    }
+    return true
+  },
+
+  createService: async (payload) => {
+    const resp = await fetch(`${API_BASE_URL}/api/service`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const txt = await resp.text()
+    if (!resp.ok) throw new Error(txt || 'Failed to create service')
+    return JSON.parse(txt)
+  },
+
+  updateService: async (name, payload) => {
+    const resp = await fetch(`${API_BASE_URL}/api/service/${encodeURIComponent(name)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const txt = await resp.text()
+    if (!resp.ok) throw new Error(txt || 'Failed to update service')
+    return JSON.parse(txt || '{}')
+  },
+
+  deleteService: async (name) => {
+    const resp = await fetch(`${API_BASE_URL}/api/service/${encodeURIComponent(name)}`, { method: 'DELETE' })
+    if (!resp.ok) {
+      const txt = await resp.text()
+      throw new Error(txt || 'Failed to delete service')
+    }
+    return true
+  },
+
+  updateAppointment: async (id, payload) => {
+    const resp = await fetch(`${API_BASE_URL}/api/appointment/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const txt = await resp.text()
+    if (!resp.ok) throw new Error(txt || 'Failed to update appointment')
+    return JSON.parse(txt || '{}')
+  },
+
+  deleteAppointment: async (id) => {
+    const resp = await fetch(`${API_BASE_URL}/api/appointment/${id}`, { method: 'DELETE' })
+    if (!resp.ok) {
+      const txt = await resp.text()
+      throw new Error(txt || 'Failed to delete appointment')
+    }
+    return true
+  },
+
   // Create appointment
   createAppointment: async (appointmentData) => {
     try {

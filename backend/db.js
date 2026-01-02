@@ -62,19 +62,53 @@ async function addCapster(payload = {}) {
   return Array.isArray(data) ? data[0] : data
 }
 
+async function updateCapster(id, payload = {}) {
+  if (!id) throw new Error('capster id required')
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for capster update')
+  const body = {
+    name: payload.name,
+    alias: payload.alias,
+    description: payload.description,
+    instaAcc: payload.instaAcc || payload.instaacc || payload.insta
+  }
+  const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/capster?id=eq.${encodeURIComponent(id)}`
+  const resp = await fetchImpl(url, { method: 'PATCH', headers: buildHeaders({ write: true, json: true, preferReturn: true }), body: JSON.stringify(body) })
+  const txt = await resp.text()
+  if (!resp.ok) throw new Error(`Supabase capster update error: ${resp.status} ${txt}`)
+  const data = JSON.parse(txt || '{}')
+  return Array.isArray(data) ? data[0] : data
+}
+
+async function deleteCapster(id) {
+  if (!id) throw new Error('capster id required')
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for capster delete')
+  const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/capster?id=eq.${encodeURIComponent(id)}`
+  const resp = await fetchImpl(url, { method: 'DELETE', headers: buildHeaders({ write: true }) })
+  if (!resp.ok) {
+    const t = await resp.text()
+    throw new Error(`Supabase capster delete error: ${resp.status} ${t}`)
+  }
+  return true
+}
+
 async function close() { /* no-op: Postgres disabled */ }
 
 export default {
   query,
   getCapsters,
   addCapster,
+  updateCapster,
+  deleteCapster,
   getServices,
   addService,
+  updateService,
+  deleteService,
   getAppointments,
   getAppointmentsByDate,
   deletePastAppointments,
   getAppointmentsByUser,
   addAppointment,
+  updateAppointment,
   updateAppointmentStatus,
   deleteAppointment,
   createAccount,
@@ -182,6 +216,34 @@ async function addService({ name, description, price, type }) {
   if (!resp.ok) throw new Error(`Supabase service insert error: ${resp.status} ${txt}`)
   const data = JSON.parse(txt)
   return Array.isArray(data) ? data[0] : data
+}
+
+async function updateService(name, payload = {}) {
+  if (!name) throw new Error('service name required')
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for service update')
+  const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/service?name=eq.${encodeURIComponent(name)}`
+  const body = {
+    description: payload.description,
+    price: payload.price,
+    type: payload.type
+  }
+  const resp = await fetchImpl(url, { method: 'PATCH', headers: buildHeaders({ write: true, json: true, preferReturn: true }), body: JSON.stringify(body) })
+  const txt = await resp.text()
+  if (!resp.ok) throw new Error(`Supabase service update error: ${resp.status} ${txt}`)
+  const data = JSON.parse(txt || '{}')
+  return Array.isArray(data) ? data[0] : data
+}
+
+async function deleteService(name) {
+  if (!name) throw new Error('service name required')
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for service delete')
+  const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/service?name=eq.${encodeURIComponent(name)}`
+  const resp = await fetchImpl(url, { method: 'DELETE', headers: buildHeaders({ write: true }) })
+  if (!resp.ok) {
+    const t = await resp.text()
+    throw new Error(`Supabase service delete error: ${resp.status} ${t}`)
+  }
+  return true
 }
 
 // ===================== Appointments Helpers =====================
@@ -362,6 +424,56 @@ async function addAppointment({ name, email, phone, date, time, service, capster
     appointment_date: row.date,
     appointment_time: row.time
   }
+}
+
+// Update appointment fields (admin use)
+async function updateAppointment(id, payload = {}) {
+  if (!id) throw new Error('appointment id required')
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for appointment update')
+
+  const normalizedStatus = payload.status
+    ? String(payload.status).toLowerCase()
+    : undefined
+  if (normalizedStatus && !ALLOWED_APPOINTMENT_STATUSES.includes(normalizedStatus)) {
+    throw new Error('Invalid status')
+  }
+
+  const body = {
+    name: payload.name,
+    email: payload.email,
+    phone: payload.phone,
+    date: payload.date,
+    time: payload.time,
+    status: normalizedStatus,
+    capsterId: payload.capsterId,
+    service: payload.service,
+    service_id: payload.service_id,
+    notes: payload.notes
+  }
+
+  // Double-booking check if date/time/capsterId present and status to approved
+  if (body.capsterId && body.date && body.time && (body.status ? body.status === 'approved' : true)) {
+    const conflicting = await getAppointmentsByDate({
+      date: body.date,
+      capsterId: body.capsterId,
+      statuses: ['approved']
+    })
+    const hasSameTime = (conflicting || []).some((apt) => apt.time === body.time && String(apt.id) !== String(id))
+    if (hasSameTime) {
+      const err = new Error('Waktu sudah dibooking untuk capster ini')
+      err.code = 'TIME_SLOT_TAKEN'
+      throw err
+    }
+  }
+
+  const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/appointment?id=eq.${encodeURIComponent(id)}`
+  const resp = await fetchImpl(url, { method:'PATCH', headers: buildHeaders({ write:true, json:true, preferReturn: true }), body: JSON.stringify(body) })
+  const txt = await resp.text()
+  if (!resp.ok) throw new Error(`Supabase appointment update error: ${resp.status} ${txt}`)
+  try {
+    const data = JSON.parse(txt || '{}')
+    return Array.isArray(data) ? data[0] : data
+  } catch(_){ return true }
 }
 
 // Insert a row into riwayat_pengguna (user history). Accepts { email, name, service, capster, date, time }

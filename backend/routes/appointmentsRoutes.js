@@ -157,6 +157,21 @@ router.post(['/appointment', '/appointments'], async (req, res) => {
   }
 })
 
+// PATCH /api/appointment/:id (edit appointment fields)
+router.patch('/appointment/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const row = await db.updateAppointment(id, req.body || {})
+    return res.json({ data: row })
+  } catch (err) {
+    console.error('PATCH /api/appointment/:id error', err && err.message)
+    if (err?.code === 'TIME_SLOT_TAKEN') {
+      return res.status(409).json({ error: err.message })
+    }
+    return res.status(500).json({ error: err?.message || 'Server error' })
+  }
+})
+
 // PATCH /api/appointment/:id/status { status }
 router.patch('/appointment/:id/status', async (req,res)=>{
   try {

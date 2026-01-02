@@ -7,6 +7,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../config/api';
@@ -16,6 +17,10 @@ const AdminScreen = () => {
   const [appointments, setAppointments] = useState([]);
   const [services, setServices] = useState([]);
   const [capsters, setCapsters] = useState([]);
+  const [serviceForm, setServiceForm] = useState({ name: '', description: '', price: '', type: '' });
+  const [capsterForm, setCapsterForm] = useState({ name: '', alias: '', description: '', instaAcc: '' });
+  const [editingServiceName, setEditingServiceName] = useState(null);
+  const [editingCapsterId, setEditingCapsterId] = useState(null);
   const [stats, setStats] = useState({
     totalAppointments: 0,
     pendingAppointments: 0,
@@ -80,6 +85,103 @@ const AdminScreen = () => {
     setRefreshing(true);
     await fetchData();
     setRefreshing(false);
+  };
+
+  const resetServiceForm = () => { setServiceForm({ name: '', description: '', price: '', type: '' }); setEditingServiceName(null); };
+  const resetCapsterForm = () => { setCapsterForm({ name: '', alias: '', description: '', instaAcc: '' }); setEditingCapsterId(null); };
+
+  const saveService = async () => {
+    if (!serviceForm.name) return Alert.alert('Error', 'Nama service wajib diisi');
+    try {
+      if (editingServiceName) {
+        await api.updateService(editingServiceName, {
+          description: serviceForm.description,
+          price: Number(serviceForm.price) || 0,
+          type: serviceForm.type,
+        });
+        Alert.alert('Sukses', 'Service diperbarui');
+      } else {
+        await api.createService({
+          name: serviceForm.name,
+          description: serviceForm.description,
+          price: Number(serviceForm.price) || 0,
+          type: serviceForm.type,
+        });
+        Alert.alert('Sukses', 'Service ditambahkan');
+      }
+      resetServiceForm();
+      await fetchData();
+    } catch (e) {
+      Alert.alert('Error', e.message || 'Gagal menyimpan service');
+    }
+  };
+
+  const deleteServiceItem = async (name) => {
+    Alert.alert('Hapus Service', `Hapus service ${name}?`, [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Hapus', style: 'destructive', onPress: async () => {
+        try {
+          await api.deleteService(name);
+          await fetchData();
+        } catch (e) {
+          Alert.alert('Error', e.message || 'Gagal menghapus service');
+        }
+      }}
+    ]);
+  };
+
+  const saveCapster = async () => {
+    if (!capsterForm.name) return Alert.alert('Error', 'Nama capster wajib diisi');
+    try {
+      if (editingCapsterId) {
+        await api.updateCapster(editingCapsterId, capsterForm);
+        Alert.alert('Sukses', 'Capster diperbarui');
+      } else {
+        await api.createCapster(capsterForm);
+        Alert.alert('Sukses', 'Capster ditambahkan');
+      }
+      resetCapsterForm();
+      await fetchData();
+    } catch (e) {
+      Alert.alert('Error', e.message || 'Gagal menyimpan capster');
+    }
+  };
+
+  const deleteCapsterItem = async (id, name) => {
+    Alert.alert('Hapus Capster', `Hapus capster ${name || id}?`, [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Hapus', style: 'destructive', onPress: async () => {
+        try {
+          await api.deleteCapster(id);
+          await fetchData();
+        } catch (e) {
+          Alert.alert('Error', e.message || 'Gagal menghapus capster');
+        }
+      }}
+    ]);
+  };
+
+  const updateAppointmentStatus = async (id, status) => {
+    try {
+      await api.updateAppointment(id, { status });
+      await fetchData();
+    } catch (e) {
+      Alert.alert('Error', e.message || 'Gagal memperbarui appointment');
+    }
+  };
+
+  const deleteAppointmentItem = async (id) => {
+    Alert.alert('Hapus Appointment', 'Yakin ingin menghapus?', [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Hapus', style: 'destructive', onPress: async () => {
+        try {
+          await api.deleteAppointment(id);
+          await fetchData();
+        } catch (e) {
+          Alert.alert('Error', e.message || 'Gagal menghapus appointment');
+        }
+      }}
+    ]);
   };
 
   return (
@@ -148,6 +250,17 @@ const AdminScreen = () => {
                   {appointment.status?.toUpperCase()}
                 </Text>
               </View>
+              <View style={styles.rowActions}>
+                <TouchableOpacity style={[styles.smallButton, styles.buttonApprove]} onPress={() => updateAppointmentStatus(appointment.id, 'approved')}>
+                  <Text style={styles.smallButtonText}>APPROVE</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.smallButton, styles.buttonReject]} onPress={() => updateAppointmentStatus(appointment.id, 'not approved')}>
+                  <Text style={styles.smallButtonText}>REJECT</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.smallButton, styles.buttonDelete]} onPress={() => deleteAppointmentItem(appointment.id)}>
+                  <Text style={styles.smallButtonText}>DELETE</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ))
         ) : (
@@ -158,6 +271,42 @@ const AdminScreen = () => {
       {/* Services List */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Services ({services.length})</Text>
+        <View style={styles.formCard}>
+          <Text style={styles.formTitle}>{editingServiceName ? 'Edit Service' : 'Tambah Service'}</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Nama"
+            value={serviceForm.name}
+            onChangeText={(t) => setServiceForm({ ...serviceForm, name: t })}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Deskripsi"
+            value={serviceForm.description}
+            onChangeText={(t) => setServiceForm({ ...serviceForm, description: t })}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Harga"
+            keyboardType="numeric"
+            value={serviceForm.price}
+            onChangeText={(t) => setServiceForm({ ...serviceForm, price: t })}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Tipe"
+            value={serviceForm.type}
+            onChangeText={(t) => setServiceForm({ ...serviceForm, type: t })}
+          />
+          <TouchableOpacity style={styles.primaryButton} onPress={saveService}>
+            <Text style={styles.primaryButtonText}>{editingServiceName ? 'UPDATE SERVICE' : 'SIMPAN SERVICE'}</Text>
+          </TouchableOpacity>
+          {editingServiceName && (
+            <TouchableOpacity style={styles.cancelEdit} onPress={resetServiceForm}>
+              <Text style={styles.cancelEditText}>Batal edit</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         {services.length > 0 ? (
           services.map((service) => (
             <View key={service.id} style={styles.itemCard}>
@@ -165,6 +314,25 @@ const AdminScreen = () => {
               <Text style={styles.itemPrice}>
                 Rp {service.price?.toLocaleString('id-ID')}
               </Text>
+              <View style={styles.rowActions}>
+                <TouchableOpacity
+                  style={[styles.smallButton, styles.buttonApprove]}
+                  onPress={() => {
+                    setEditingServiceName(service.name);
+                    setServiceForm({
+                      name: service.name || '',
+                      description: service.description || '',
+                      price: String(service.price || ''),
+                      type: service.type || '',
+                    });
+                  }}
+                >
+                  <Text style={styles.smallButtonText}>EDIT</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.smallButton, styles.buttonDelete]} onPress={() => deleteServiceItem(service.name)}>
+                  <Text style={styles.smallButtonText}>DELETE</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ))
         ) : (
@@ -175,6 +343,41 @@ const AdminScreen = () => {
       {/* Capsters List */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Team Members ({capsters.length})</Text>
+        <View style={styles.formCard}>
+          <Text style={styles.formTitle}>{editingCapsterId ? 'Edit Capster' : 'Tambah Capster'}</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Nama"
+            value={capsterForm.name}
+            onChangeText={(t) => setCapsterForm({ ...capsterForm, name: t })}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Alias"
+            value={capsterForm.alias}
+            onChangeText={(t) => setCapsterForm({ ...capsterForm, alias: t })}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Deskripsi"
+            value={capsterForm.description}
+            onChangeText={(t) => setCapsterForm({ ...capsterForm, description: t })}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Instagram"
+            value={capsterForm.instaAcc}
+            onChangeText={(t) => setCapsterForm({ ...capsterForm, instaAcc: t })}
+          />
+          <TouchableOpacity style={styles.primaryButton} onPress={saveCapster}>
+            <Text style={styles.primaryButtonText}>{editingCapsterId ? 'UPDATE CAPSTER' : 'SIMPAN CAPSTER'}</Text>
+          </TouchableOpacity>
+          {editingCapsterId && (
+            <TouchableOpacity style={styles.cancelEdit} onPress={resetCapsterForm}>
+              <Text style={styles.cancelEditText}>Batal edit</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         {capsters.length > 0 ? (
           capsters.map((capster) => (
             <View key={capster.id} style={styles.itemCard}>
@@ -182,6 +385,25 @@ const AdminScreen = () => {
               <Text style={styles.itemDetail}>
                 Experience: {capster.experience} years
               </Text>
+              <View style={styles.rowActions}>
+                <TouchableOpacity
+                  style={[styles.smallButton, styles.buttonApprove]}
+                  onPress={() => {
+                    setEditingCapsterId(capster.id);
+                    setCapsterForm({
+                      name: capster.name || '',
+                      alias: capster.alias || '',
+                      description: capster.description || '',
+                      instaAcc: capster.instaAcc || '',
+                    });
+                  }}
+                >
+                  <Text style={styles.smallButtonText}>EDIT</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.smallButton, styles.buttonDelete]} onPress={() => deleteCapsterItem(capster.id, capster.name)}>
+                  <Text style={styles.smallButtonText}>DELETE</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ))
         ) : (
@@ -299,6 +521,71 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  rowActions: {
+    flexDirection: 'row',
+    marginTop: 10,
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  smallButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+  smallButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  buttonApprove: {
+    backgroundColor: '#4CAF50',
+  },
+  buttonReject: {
+    backgroundColor: '#FFA726',
+  },
+  buttonDelete: {
+    backgroundColor: '#EF5350',
+  },
+  formCard: {
+    backgroundColor: '#f2f2f2',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  formTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
+    color: '#333',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 8,
+    backgroundColor: '#fff',
+  },
+  primaryButton: {
+    backgroundColor: '#8B4513',
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  cancelEdit: {
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  cancelEditText: {
+    color: '#b91c1c',
+    fontWeight: '700',
   },
   itemCard: {
     backgroundColor: '#f9f9f9',

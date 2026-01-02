@@ -53,7 +53,7 @@ const ProfileScreen = ({ navigation }) => {
   const confirmLogout = async () => {
     setLogoutModalVisible(false);
     await signOut();
-    navigation.replace('Auth');
+    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
   };
 
   return (

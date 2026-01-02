@@ -73,4 +73,28 @@ router.post('/capster', async (req, res) => {
   }
 })
 
+// PATCH /api/capster/:id
+router.patch('/capster/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const row = await db.updateCapster(id, req.body || {})
+    return res.json({ data: row })
+  } catch (err) {
+    console.error('PATCH /api/capster/:id error', err && err.message)
+    return res.status(500).json({ error: err?.message || 'Server error' })
+  }
+})
+
+// DELETE /api/capster/:id
+router.delete('/capster/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    await db.deleteCapster(id)
+    return res.status(204).send()
+  } catch (err) {
+    console.error('DELETE /api/capster/:id error', err && err.message)
+    return res.status(500).json({ error: err?.message || 'Server error' })
+  }
+})
+
 export default router

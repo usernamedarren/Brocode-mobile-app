@@ -195,7 +195,7 @@ const BookingScreen = ({ route, navigation }) => {
     if (!user) {
       console.error('User object is null or undefined');
       Alert.alert('Error', 'Sesi login telah berakhir. Silakan login kembali.');
-      navigation.replace('Auth');
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
       return;
     }
     
@@ -203,7 +203,7 @@ const BookingScreen = ({ route, navigation }) => {
     if (!user.id) {
       console.error('User object exists but ID is missing:', user);
       Alert.alert('Error', 'Data user tidak lengkap. Silakan login kembali.');
-      navigation.replace('Auth');
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
       return;
     }
     

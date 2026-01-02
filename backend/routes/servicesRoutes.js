@@ -73,4 +73,28 @@ router.post('/service', async (req, res) => {
   }
 })
 
+// PATCH /api/service/:name
+router.patch('/service/:name', async (req, res) => {
+  try {
+    const { name } = req.params
+    const row = await db.updateService(name, req.body || {})
+    return res.json({ data: row })
+  } catch (err) {
+    console.error('PATCH /api/service/:name error', err && err.message)
+    return res.status(500).json({ error: err?.message || 'Server error' })
+  }
+})
+
+// DELETE /api/service/:name
+router.delete('/service/:name', async (req, res) => {
+  try {
+    const { name } = req.params
+    await db.deleteService(name)
+    return res.status(204).send()
+  } catch (err) {
+    console.error('DELETE /api/service/:name error', err && err.message)
+    return res.status(500).json({ error: err?.message || 'Server error' })
+  }
+})
+
 export default router
