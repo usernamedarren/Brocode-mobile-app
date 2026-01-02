@@ -53,7 +53,7 @@ const ProfileScreen = ({ navigation }) => {
   const confirmLogout = async () => {
     setLogoutModalVisible(false);
     await signOut();
-    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    navigation.getParent()?.navigate('Login');
   };
 
   return (
@@ -91,14 +91,9 @@ const ProfileScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Nomor Telepon</Text>
-          <Text style={styles.infoValue}>{user?.phone || '-'}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Role</Text>
           <Text style={styles.infoValue}>
-            {user?.role === 'admin' ? 'Administrator' : 'Pengguna'}
+            {user?.role === 'admin' ? 'Administrator' : 'Customer'}
           </Text>
         </View>
       </View>

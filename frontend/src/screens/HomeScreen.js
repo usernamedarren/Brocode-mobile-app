@@ -121,6 +121,7 @@ const HomeScreen = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [loadingInstagram, setLoadingInstagram] = useState(false);
+  const [statusCard, setStatusCard] = useState({ visible: false, title: '', subtitle: '' });
   const { user } = useAuth();
   const heroFadeAnim = useRef(new Animated.Value(0)).current;
   const heroScaleAnim = useRef(new Animated.Value(0.9)).current;
@@ -172,41 +173,50 @@ const HomeScreen = ({ navigation }) => {
     setSelectedCapster(capsters[newIndex]);
   };
 
-  const getInstagramUrl = (capsterId) => {
-    const instagramUrls = {
-      1: 'https://www.instagram.com/rickybro_code',
-      2: 'https://www.instagram.com/fikslem',
-      3: 'https://www.instagram.com/anggaprnma__',
-    };
-    return instagramUrls[capsterId] || null;
+  const normalizeInstagramHandle = (handle) => {
+    if (!handle) return null;
+    const cleaned = handle.replace('@', '').trim();
+    return cleaned ? cleaned.toLowerCase() : null;
   };
 
-  const openInstagram = async (capsterId) => {
-    const url = getInstagramUrl(capsterId);
-    if (url) {
-      setLoadingInstagram(true);
+  const buildInstagramUrl = (handle) => {
+    if (!handle) return null;
+    if (handle.startsWith('http')) return handle;
+    return `https://www.instagram.com/${handle}`;
+  };
 
-      Alert.alert(
-        'Membuka Instagram',
-        'Mengarahkan ke profil Instagram...',
-        [],
-        { cancelable: false }
-      );
-      
-      // Small delay to show alert
-      setTimeout(async () => {
-        try {
-          const canOpen = await Linking.canOpenURL(url);
-          if (canOpen) {
-            await Linking.openURL(url);
-          }
-        } catch (error) {
-          Alert.alert('Error', 'Tidak dapat membuka Instagram');
-        } finally {
-          setLoadingInstagram(false);
-        }
-      }, 500);
+  const openInstagram = async (capster) => {
+    const handle = normalizeInstagramHandle(capster?.instaAcc || capster?.alias);
+    const url = buildInstagramUrl(handle);
+
+    if (!url) {
+      setStatusCard({ visible: true, title: 'Instagram tidak tersedia', subtitle: 'Handle belum diisi untuk capster ini.' });
+      setTimeout(() => setStatusCard({ visible: false, title: '', subtitle: '' }), 1400);
+      return;
     }
+
+    setLoadingInstagram(true);
+    setStatusCard({ visible: true, title: 'Membuka Instagram', subtitle: `@${handle}` });
+    closeCapsterModal();
+
+    // Small delay to let the card show before leaving the app
+    setTimeout(async () => {
+      try {
+        const canOpen = await Linking.canOpenURL(url);
+        if (canOpen) {
+          await Linking.openURL(url);
+        } else {
+          setStatusCard({ visible: true, title: 'Tidak dapat membuka', subtitle: 'Periksa aplikasi Instagram Anda.' });
+          setTimeout(() => setStatusCard({ visible: false, title: '', subtitle: '' }), 1600);
+        }
+      } catch (error) {
+        setStatusCard({ visible: true, title: 'Gagal membuka', subtitle: 'Terjadi kendala membuka Instagram.' });
+        setTimeout(() => setStatusCard({ visible: false, title: '', subtitle: '' }), 1600);
+      } finally {
+        setLoadingInstagram(false);
+        setTimeout(() => setStatusCard({ visible: false, title: '', subtitle: '' }), 800);
+      }
+    }, 400);
   };
 
   const fetchData = async (forceRefresh = false) => {
@@ -529,11 +539,11 @@ const HomeScreen = ({ navigation }) => {
                         />
                       ) : (
                         <View style={styles.capsterImage}>
-                          <Text style={styles.capsterInitial}>{capster.name?.[0]}</Text>
+                          <Text style={styles.capsterInitial}>{capster.name?.[0]?.toUpperCase()}</Text>
                         </View>
                       )}
-                      <Text style={styles.capsterName}>{capster.name}</Text>
-                      <Text style={styles.capsterAlias}>@{capster.alias || capster.instaAcc}</Text>
+                      <Text style={styles.capsterName}>{capster.name?.toUpperCase()}</Text>
+                      <Text style={styles.capsterAlias}>@{(capster.alias || capster.instaAcc || '').toUpperCase()}</Text>
                     </TouchableOpacity>
                   </AnimatedCard>
                 );
@@ -619,11 +629,11 @@ const HomeScreen = ({ navigation }) => {
                 )}
                 
                 {/* Capster Name */}
-                <Text style={styles.modalCapsterName}>{selectedCapster.name}</Text>
+                <Text style={styles.modalCapsterName}>{selectedCapster.name?.toUpperCase()}</Text>
                 
                 {/* Alias */}
                 {selectedCapster.alias && (
-                  <Text style={styles.modalCapsterAlias}>a.k.a {selectedCapster.alias}</Text>
+                  <Text style={styles.modalCapsterAlias}>a.k.a {selectedCapster.alias.toUpperCase()}</Text>
                 )}
                 
                 {/* Description */}
@@ -637,12 +647,12 @@ const HomeScreen = ({ navigation }) => {
                 {(selectedCapster.instaAcc || selectedCapster.alias) && (
                   <TouchableOpacity 
                     style={styles.modalInstagramContainer}
-                    onPress={() => openInstagram(selectedCapster.id)}
+                    onPress={() => openInstagram(selectedCapster)}
                     activeOpacity={0.7}
                   >
                     <Ionicons name="logo-instagram" size={20} color={Colors.accentColor} />
                     <Text style={styles.modalInstagramHandle}>
-                      @{selectedCapster.instaAcc || selectedCapster.alias}
+                      @{(selectedCapster.instaAcc || selectedCapster.alias).toUpperCase()}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -688,6 +698,25 @@ const HomeScreen = ({ navigation }) => {
               </Animated.View>
             )}
           </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={statusCard.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setStatusCard({ visible: false, title: '', subtitle: '' })}
+      >
+        <View style={styles.statusCardOverlay}>
+          <Animated.View style={styles.statusCard}>
+            <Text style={styles.statusCardTitle}>{statusCard.title}</Text>
+            {statusCard.subtitle ? (
+              <Text style={styles.statusCardSubtitle}>{statusCard.subtitle}</Text>
+            ) : null}
+            {loadingInstagram && (
+              <ActivityIndicator size="small" color={Colors.accentColor} style={{ marginTop: 12 }} />
+            )}
+          </Animated.View>
         </View>
       </Modal>
       </>
@@ -1123,6 +1152,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     marginTop: 8,
+  },
+  statusCardOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  statusCard: {
+    width: width * 0.8,
+    backgroundColor: Colors.cardBg,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+    alignItems: 'center',
+  },
+  statusCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textDark,
+    textAlign: 'center',
+  },
+  statusCardSubtitle: {
+    marginTop: 8,
+    fontSize: 14,
+    color: Colors.textMuted,
+    textAlign: 'center',
   },
   modalInstagramHandle: {
     fontSize: 15,

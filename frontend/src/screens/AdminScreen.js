@@ -221,8 +221,8 @@ const AdminScreen = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Recent Appointments</Text>
         {appointments.length > 0 ? (
-          appointments.slice(0, 10).map((appointment) => (
-            <View key={appointment.id} style={styles.appointmentCard}>
+          appointments.slice(0, 10).map((appointment, idx) => (
+            <View key={appointment.id ?? `${appointment.email || 'appt'}-${appointment.date}-${appointment.time}-${idx}`} style={styles.appointmentCard}>
               <Text style={styles.appointmentCustomer}>
                 {appointment.name || 'Unknown'}
               </Text>
@@ -308,8 +308,8 @@ const AdminScreen = () => {
           )}
         </View>
         {services.length > 0 ? (
-          services.map((service) => (
-            <View key={service.id} style={styles.itemCard}>
+          services.map((service, idx) => (
+            <View key={service.id ?? service.name ?? `svc-${idx}`} style={styles.itemCard}>
               <Text style={styles.itemName}>{service.name}</Text>
               <Text style={styles.itemPrice}>
                 Rp {service.price?.toLocaleString('id-ID')}
@@ -379,8 +379,8 @@ const AdminScreen = () => {
           )}
         </View>
         {capsters.length > 0 ? (
-          capsters.map((capster) => (
-            <View key={capster.id} style={styles.itemCard}>
+          capsters.map((capster, idx) => (
+            <View key={capster.id ?? capster.alias ?? `capster-${idx}`} style={styles.itemCard}>
               <Text style={styles.itemName}>{capster.name}</Text>
               <Text style={styles.itemDetail}>
                 Experience: {capster.experience} years

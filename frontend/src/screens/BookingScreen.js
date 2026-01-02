@@ -37,7 +37,7 @@ const BookingScreen = ({ route, navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -195,7 +195,8 @@ const BookingScreen = ({ route, navigation }) => {
     if (!user) {
       console.error('User object is null or undefined');
       Alert.alert('Error', 'Sesi login telah berakhir. Silakan login kembali.');
-      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      await signOut?.();
+      navigation.getParent()?.navigate('Login');
       return;
     }
     
@@ -203,7 +204,8 @@ const BookingScreen = ({ route, navigation }) => {
     if (!user.id) {
       console.error('User object exists but ID is missing:', user);
       Alert.alert('Error', 'Data user tidak lengkap. Silakan login kembali.');
-      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      await signOut?.();
+      navigation.getParent()?.navigate('Login');
       return;
     }
     
