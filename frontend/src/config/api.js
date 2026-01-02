@@ -115,6 +115,23 @@ export const api = {
     }
   },
 
+  // Get appointments for a specific date/capster (used for slot availability)
+  getAppointmentsByDate: async ({ date, capsterId, statuses = ['approved', 'confirmed'] }) => {
+    if (!date) throw new Error('date is required')
+
+    const query = new URLSearchParams({ date })
+    if (capsterId) query.append('capsterId', capsterId)
+    if (statuses && statuses.length) query.append('statuses', statuses.join(','))
+
+    const response = await fetch(`${API_BASE_URL}/api/appointments?${query.toString()}`)
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Appointments by date fetch error:', response.status, errorText)
+      throw new Error('Gagal memuat ketersediaan jadwal')
+    }
+    return response.json()
+  },
+
   // Get user appointments
   getAppointments: async (userId) => {
     try {

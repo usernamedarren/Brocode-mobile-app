@@ -33,16 +33,21 @@ const router = express.Router()
 // GET /api/appointment (singular) or /api/appointments (plural)
 router.get(['/appointment', '/appointments'], async (req, res) => {
   try {
-    const { user_id, email } = req.query
+    const { user_id, email, date, capsterId, statuses } = req.query
     let rows
     
     // Support both user_id (for backward compatibility) and email (preferred)
     const filterBy = email || user_id
-    console.log('GET /api/appointments - filter:', filterBy)
-    
+    console.log('GET /api/appointments - filter:', filterBy || 'all', 'date:', date, 'capsterId:', capsterId)
+
     if (filterBy) {
       // Filter by email/user_id if provided
       rows = await db.getAppointmentsByUser(filterBy)
+    } else if (date) {
+      const statusList = typeof statuses === 'string' && statuses.length
+        ? statuses.split(',').map((s) => s.trim()).filter(Boolean)
+        : ['approved', 'confirmed']
+      rows = await db.getAppointmentsByDate({ date, capsterId, statuses: statusList })
     } else {
       rows = await db.getAppointments()
     }
@@ -137,6 +142,9 @@ router.post(['/appointment', '/appointments'], async (req, res) => {
     return res.status(201).json({ data: row })
   } catch (err) {
     console.error('POST /api/appointments error', err && err.message, err && err.stack)
+    if (err?.code === 'TIME_SLOT_TAKEN') {
+      return res.status(409).json({ error: err.message })
+    }
     // Surface Supabase error message to client to ease debugging
     return res.status(500).json({ error: err?.message || 'Server error' })
   }

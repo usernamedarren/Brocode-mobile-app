@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -27,12 +27,13 @@ const BookingScreen = ({ route, navigation }) => {
   const [selectedService, setSelectedService] = useState(null);
   const [selectedCapster, setSelectedCapster] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedTime, setSelectedTime] = useState(new Date());
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [showCapsterModal, setShowCapsterModal] = useState(false);
   const [bookings, setBookings] = useState([]);
+  const [reservedSlots, setReservedSlots] = useState([]);
+  const [slotLoading, setSlotLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -41,6 +42,30 @@ const BookingScreen = ({ route, navigation }) => {
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
+
+  // Prebuild 30-minute slots (09:00 - 20:30 by default)
+  const timeSlots = useMemo(() => {
+    const slots = [];
+    const startHour = 9;
+    const endHour = 20;
+    const intervalMinutes = 30;
+
+    let cursor = new Date();
+    cursor.setHours(startHour, 0, 0, 0);
+
+    const limit = new Date();
+    // Include the last half-hour slot (e.g., 20:30)
+    limit.setHours(endHour, intervalMinutes, 0, 0);
+
+    while (cursor <= limit) {
+      const hours = cursor.getHours().toString().padStart(2, '0');
+      const minutes = cursor.getMinutes().toString().padStart(2, '0');
+      slots.push(`${hours}:${minutes}`);
+      cursor = new Date(cursor.getTime() + intervalMinutes * 60 * 1000);
+    }
+
+    return slots;
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -76,6 +101,29 @@ const BookingScreen = ({ route, navigation }) => {
     }
   };
 
+  const loadAvailability = async (targetDate = selectedDate, capster = selectedCapster) => {
+    if (!targetDate || !capster) {
+      setReservedSlots([]);
+      return;
+    }
+
+    setSlotLoading(true);
+    try {
+      const dateStr = formatDateForApi(targetDate);
+      const res = await api.getAppointmentsByDate({ date: dateStr, capsterId: capster.id });
+      const takenSlots = (res?.data || []).map((item) => {
+        const t = item.time || '';
+        return t.length > 5 ? t.slice(0, 5) : t;
+      });
+      setReservedSlots(takenSlots);
+    } catch (error) {
+      console.error('Error fetching slot availability:', error);
+      setReservedSlots([]);
+    } finally {
+      setSlotLoading(false);
+    }
+  };
+
   useEffect(() => {
     console.log('BookingScreen mounted, user:', JSON.stringify(user));
     fetchData();
@@ -83,6 +131,12 @@ const BookingScreen = ({ route, navigation }) => {
       setSelectedService(route.params.serviceId);
     }
   }, [user]);
+
+  useEffect(() => {
+    // Refresh slot availability whenever date or capster changes
+    setSelectedTimeSlot(null);
+    loadAvailability();
+  }, [selectedDate, selectedCapster]);
 
   // Reset and trigger animations when screen comes into focus
   useFocusEffect(
@@ -113,6 +167,21 @@ const BookingScreen = ({ route, navigation }) => {
     await fetchData();
     setRefreshing(false);
   };
+
+  const formatDateForApi = (dateObj) => dateObj.toISOString().split('T')[0];
+
+  const isSlotInPast = (slot) => {
+    if (!selectedDate) return false;
+    const now = new Date();
+    const candidate = new Date(selectedDate);
+    const [hour, minute] = slot.split(':').map((v) => parseInt(v, 10));
+    candidate.setHours(hour, minute, 0, 0);
+    return candidate < now;
+  };
+
+  const isSlotTaken = (slot) => reservedSlots.includes(slot);
+
+  const isSlotDisabled = (slot) => isSlotTaken(slot) || isSlotInPast(slot);
 
   const handleBooking = async () => {
     // Debug logging
@@ -149,12 +218,25 @@ const BookingScreen = ({ route, navigation }) => {
       return;
     }
 
+    if (!selectedCapster) {
+      Alert.alert('Error', 'Mohon pilih capster agar jadwal dapat dicek.');
+      return;
+    }
+
+    if (!selectedTimeSlot) {
+      Alert.alert('Error', 'Mohon pilih jam kunjungan.');
+      return;
+    }
+
+    if (isSlotTaken(selectedTimeSlot)) {
+      Alert.alert('Penuh', 'Jam tersebut sudah dibooking. Silakan pilih jam lain.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const appointmentDate = selectedDate.toISOString().split('T')[0];
-      const hours = selectedTime.getHours().toString().padStart(2, '0');
-      const minutes = selectedTime.getMinutes().toString().padStart(2, '0');
-      const appointmentTime = `${hours}:${minutes}`;
+      const appointmentDate = formatDateForApi(selectedDate);
+      const appointmentTime = selectedTimeSlot;
       
       const appointmentData = {
         user_id: user.id,
@@ -177,8 +259,10 @@ const BookingScreen = ({ route, navigation }) => {
       setSelectedService(null);
       setSelectedCapster(null);
       setSelectedDate(new Date());
-      setSelectedTime(new Date());
+      setSelectedTimeSlot(null);
+      setReservedSlots([]);
       await fetchData();
+      await loadAvailability(new Date(), null);
     } catch (error) {
       console.error('Booking error:', error);
       Alert.alert('Error', error.message || 'Gagal membuat booking');
@@ -191,13 +275,6 @@ const BookingScreen = ({ route, navigation }) => {
     setShowDatePicker(false);
     if (date) {
       setSelectedDate(date);
-    }
-  };
-
-  const onTimeChange = (event, time) => {
-    setShowTimePicker(false);
-    if (time) {
-      setSelectedTime(time);
     }
   };
 
@@ -285,25 +362,44 @@ const BookingScreen = ({ route, navigation }) => {
         {/* Time Picker */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Pilih Waktu *</Text>
-          <TouchableOpacity
-            style={styles.dropdownButton}
-            onPress={() => setShowTimePicker(true)}
-          >
-            <Text style={styles.dropdownButtonText}>
-               {selectedTime.toLocaleTimeString('id-ID', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              })}
-            </Text>
-          </TouchableOpacity>
-          {showTimePicker && (
-            <DateTimePicker
-              value={selectedTime}
-              mode="time"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              is24Hour={true}
-              onChange={onTimeChange}
-            />
+          <View style={styles.slotGrid}>
+            {timeSlots.map((slot) => {
+              const selected = selectedTimeSlot === slot;
+              const disabled = isSlotDisabled(slot);
+              const taken = isSlotTaken(slot);
+
+              return (
+                <TouchableOpacity
+                  key={`slot-${slot}`}
+                  style={[
+                    styles.slotButton,
+                    selected && styles.slotButtonSelected,
+                    disabled && styles.slotButtonDisabled,
+                    taken && styles.slotButtonTaken,
+                  ]}
+                  onPress={() => setSelectedTimeSlot(slot)}
+                  disabled={disabled}
+                >
+                  <Text
+                    style={[
+                      styles.slotText,
+                      selected && styles.slotTextSelected,
+                      disabled && styles.slotTextDisabled,
+                    ]}
+                  >
+                    {slot}
+                  </Text>
+                  {taken && <Text style={styles.slotTag}>BOOKED</Text>}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          {slotLoading && <Text style={styles.slotHelper}>Memuat ketersediaan...</Text>}
+          {!selectedCapster && (
+            <Text style={styles.slotHelper}>Pilih capster untuk melihat jam yang tersedia.</Text>
+          )}
+          {selectedCapster && !slotLoading && (
+            <Text style={styles.slotHelper}>Slot bertanda BOOKED tidak dapat dipilih.</Text>
           )}
         </View>
 
@@ -585,6 +681,56 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textDark,
     marginLeft: 8,
+  },
+  slotGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 6,
+  },
+  slotButton: {
+    width: '30%',
+    marginRight: 8,
+    marginBottom: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: Colors.borderColor,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: Colors.bgColor,
+  },
+  slotButtonSelected: {
+    backgroundColor: Colors.accentColor,
+    borderColor: Colors.accentColor,
+  },
+  slotButtonDisabled: {
+    opacity: 0.5,
+  },
+  slotButtonTaken: {
+    borderColor: '#F44336',
+  },
+  slotText: {
+    fontSize: 14,
+    color: Colors.textDark,
+    fontWeight: '600',
+  },
+  slotTextSelected: {
+    color: Colors.textLight,
+  },
+  slotTextDisabled: {
+    color: '#9E9E9E',
+  },
+  slotTag: {
+    marginTop: 6,
+    fontSize: 10,
+    color: '#F44336',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  slotHelper: {
+    marginTop: 6,
+    fontSize: 12,
+    color: Colors.textMuted,
   },
   pickerContainer: {
     borderWidth: 1,

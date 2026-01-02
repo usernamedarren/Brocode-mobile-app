@@ -71,6 +71,7 @@ export default {
   getServices,
   addService,
   getAppointments,
+  getAppointmentsByDate,
   getAppointmentsByUser,
   addAppointment,
   updateAppointmentStatus,
@@ -207,6 +208,22 @@ async function enrichAppointmentsWithCapsterNames(appointments) {
   }
 }
 
+// Build a filtered appointment query for Supabase REST
+function buildAppointmentQuery({ date, capsterId, statuses = [], select = '*' }) {
+  const params = [`select=${select}`]
+  if (date) params.push(`date=eq.${encodeURIComponent(date)}`)
+  if (capsterId) params.push(`capsterId=eq.${encodeURIComponent(capsterId)}`)
+
+  const filteredStatuses = (statuses || []).filter(Boolean)
+  if (filteredStatuses.length) {
+    const orClause = filteredStatuses.map((s) => `status.eq.${encodeURIComponent(s)}`).join(',')
+    params.push(`or=(${orClause})`)
+  }
+
+  const queryString = params.join('&')
+  return `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/appointment?${queryString}`
+}
+
 // Schema appointment: name, email, phone, date, time, service, capsterId, status, notes, timestamp
 async function getAppointments() {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for appointment fetch')
@@ -217,6 +234,22 @@ async function getAppointments() {
   if (!resp.ok) {
     const errorText = await resp.text()
     console.error(`Supabase appointment fetch error: ${resp.status}`, errorText)
+    throw new Error(`Supabase appointment fetch error: ${resp.status} ${errorText}`)
+  }
+  const appointments = await resp.json()
+  return await enrichAppointmentsWithCapsterNames(appointments)
+}
+
+// Fetch appointments by date and optional capster/status filters (used for availability checks)
+async function getAppointmentsByDate({ date, capsterId, statuses = [] }) {
+  if (!date) throw new Error('date required for appointment filter')
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for appointment fetch')
+
+  const url = buildAppointmentQuery({ date, capsterId, statuses })
+  const resp = await fetchImpl(url, { method: 'GET', headers: buildHeaders() })
+  if (!resp.ok) {
+    const errorText = await resp.text()
+    console.error(`Supabase appointment filtered fetch error: ${resp.status}`, errorText)
     throw new Error(`Supabase appointment fetch error: ${resp.status} ${errorText}`)
   }
   const appointments = await resp.json()
@@ -258,6 +291,21 @@ async function addAppointment({ name, email, phone, date, time, service, capster
   
   if (!appointmentData.date || !appointmentData.time) {
     throw new Error('Missing required appointment fields: date and time')
+  }
+
+  // Prevent double-booking: if the capster already has an approved/confirmed slot at the same time, block it
+  if (appointmentData.capsterId) {
+    const conflicting = await getAppointmentsByDate({
+      date: appointmentData.date,
+      capsterId: appointmentData.capsterId,
+      statuses: ['approved', 'confirmed']
+    })
+    const hasSameTime = (conflicting || []).some((apt) => apt.time === appointmentData.time)
+    if (hasSameTime) {
+      const err = new Error('Waktu sudah dibooking untuk capster ini')
+      err.code = 'TIME_SLOT_TAKEN'
+      throw err
+    }
   }
   
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for appointment insert')
