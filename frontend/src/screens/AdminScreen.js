@@ -383,7 +383,7 @@ const AdminScreen = () => {
             <View key={capster.id ?? capster.alias ?? `capster-${idx}`} style={styles.itemCard}>
               <Text style={styles.itemName}>{capster.name}</Text>
               <Text style={styles.itemDetail}>
-                Experience: {capster.experience} years
+                Alias: {capster.alias}
               </Text>
               <View style={styles.rowActions}>
                 <TouchableOpacity

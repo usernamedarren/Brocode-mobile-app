@@ -349,7 +349,7 @@ async function addAppointment({ name, email, phone, date, time, service, capster
   const appointmentData = {
     name: name || null,
     email: email || null,
-    phone: phone || null,
+    phone: phone || '0',  // Default to '0' if empty to satisfy not-null constraint
     date: date || appointment_date,
     time: time || appointment_time,
     service: service || null,

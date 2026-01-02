@@ -37,6 +37,7 @@ const BookingScreen = ({ route, navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [phoneNumber, setPhoneNumber] = useState('');
   const { user, signOut } = useAuth();
   
   // Animation refs
@@ -102,7 +103,7 @@ const BookingScreen = ({ route, navigation }) => {
   };
 
   const loadAvailability = async (targetDate = selectedDate, capster = selectedCapster) => {
-    if (!targetDate || !capster) {
+    if (!targetDate) {
       setReservedSlots([]);
       return;
     }
@@ -110,15 +111,62 @@ const BookingScreen = ({ route, navigation }) => {
     setSlotLoading(true);
     try {
       const dateStr = formatDateForApi(targetDate);
-      const res = await api.getAppointmentsByDate({ date: dateStr, capsterId: capster.id });
-      const takenSlots = (res?.data || []).map((item) => {
-        const t = item.time || '';
-        return t.length > 5 ? t.slice(0, 5) : t;
-      });
-      setReservedSlots(takenSlots);
+      
+      if (capster) {
+        // Single capster selected - check their availability
+        console.log('Calling API with:', { date: dateStr, capsterId: capster.id, statuses: ['pending', 'approved'] });
+        const res = await api.getAppointmentsByDate({ date: dateStr, capsterId: capster.id });
+        console.log('API response for capster', capster.name, ':', JSON.stringify(res, null, 2));
+        const takenSlots = (res?.data || []).map((item) => {
+          const t = item.time || '';
+          return t.length > 5 ? t.slice(0, 5) : t;
+        });
+        console.log('Reserved slots for capster', capster.name, ':', takenSlots);
+        setReservedSlots(takenSlots);
+        console.log('Final reserved slots set:', takenSlots.length, 'slots');
+      } else {
+        // No capster selected - check all capsters and mark slots booked if ALL are taken
+        if (capsters.length === 0) {
+          setReservedSlots([]);
+          return;
+        }
+        
+        // Fetch appointments for all capsters
+        const allPromises = capsters.map(c => 
+          api.getAppointmentsByDate({ date: dateStr, capsterId: c.id })
+            .then(res => ({ 
+              capsterId: c.id, 
+              slots: (res?.data || []).map(item => {
+                const t = item.time || '';
+                return t.length > 5 ? t.slice(0, 5) : t;
+              })
+            }))
+            .catch(() => ({ capsterId: c.id, slots: [] }))
+        );
+        
+        const results = await Promise.all(allPromises);
+        
+        // Count how many capsters have each slot booked
+        const slotCounts = {};
+        results.forEach(({ slots }) => {
+          slots.forEach(slot => {
+            slotCounts[slot] = (slotCounts[slot] || 0) + 1;
+          });
+        });
+        
+        // Mark slot as reserved if ALL capsters are booked
+        const fullyBookedSlots = Object.keys(slotCounts).filter(
+          slot => slotCounts[slot] >= capsters.length
+        );
+        
+        console.log('All capsters check - fully booked slots:', fullyBookedSlots);
+        setReservedSlots(fullyBookedSlots);
+        console.log('Final reserved slots set:', fullyBookedSlots.length, 'slots');
+      }
     } catch (error) {
       console.error('Error fetching slot availability:', error);
       setReservedSlots([]);
+      console.log('Final reserved slots set: 0 slots (error)');
     } finally {
       setSlotLoading(false);
     }
@@ -168,7 +216,12 @@ const BookingScreen = ({ route, navigation }) => {
     setRefreshing(false);
   };
 
-  const formatDateForApi = (dateObj) => dateObj.toISOString().split('T')[0];
+  const formatDateForApi = (dateObj) => {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   const isSlotInPast = (slot) => {
     if (!selectedDate) return false;
@@ -220,13 +273,17 @@ const BookingScreen = ({ route, navigation }) => {
       return;
     }
 
-    if (!selectedCapster) {
-      Alert.alert('Error', 'Pilih capster wajib! Mohon pilih capster untuk melanjutkan.');
+    if (!selectedTimeSlot) {
+      Alert.alert('Error', 'Mohon pilih jam kunjungan.');
       return;
     }
 
-    if (!selectedTimeSlot) {
-      Alert.alert('Error', 'Mohon pilih jam kunjungan.');
+    if (!phoneNumber || phoneNumber.trim() === '') {
+      Alert.alert(
+        'Nomor Telepon Wajib Diisi', 
+        'Mohon masukkan nomor telepon Anda.',
+        [{ text: 'OK' }]
+      );
       return;
     }
 
@@ -243,10 +300,10 @@ const BookingScreen = ({ route, navigation }) => {
       const appointmentData = {
         name: user.name,
         email: user.email,
-        phone: user.phone || '',
+        phone: phoneNumber.trim(),
         service: selectedService.name,
         capster: selectedCapster?.name || selectedCapster?.alias || '',
-        capsterId: selectedCapster.id,
+        capsterId: selectedCapster?.id || null,
         date: appointmentDate,
         time: appointmentTime,
         status: 'pending',
@@ -319,15 +376,28 @@ const BookingScreen = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Capster Dropdown (Optional) */}
+        {/* Phone Input */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Pilih Capster (Opsional)</Text>
+          <Text style={styles.label}>Nomor Telepon *</Text>
+          <TextInput
+            style={styles.phoneInput}
+            placeholder="Masukkan nomor telepon Anda"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            keyboardType="phone-pad"
+            maxLength={15}
+          />
+        </View>
+
+        {/* Capster Dropdown */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Pilih Capster *</Text>
           <TouchableOpacity
             style={styles.dropdownButton}
             onPress={() => setShowCapsterModal(true)}
           >
             <Text style={[styles.dropdownButtonText, !selectedCapster && styles.placeholderText]}>
-              {selectedCapster ? selectedCapster.name : 'Pilih capster...'}
+              {selectedCapster ? selectedCapster.name : 'Tidak memilih'}
             </Text>
             <Text style={styles.dropdownIcon}>▼</Text>
           </TouchableOpacity>
@@ -396,11 +466,11 @@ const BookingScreen = ({ route, navigation }) => {
             })}
           </View>
           {slotLoading && <Text style={styles.slotHelper}>Memuat ketersediaan...</Text>}
-          {!selectedCapster && (
-            <Text style={styles.slotHelper}>Pilih capster untuk melihat jam yang tersedia.</Text>
+          {!selectedCapster && !slotLoading && (
+            <Text style={styles.slotHelper}>Slot bertanda BOOKED berarti semua capster sudah dibooking di jam tersebut.</Text>
           )}
           {selectedCapster && !slotLoading && (
-            <Text style={styles.slotHelper}>Slot bertanda BOOKED tidak dapat dipilih.</Text>
+            <Text style={styles.slotHelper}>Slot bertanda BOOKED tidak dapat dipilih untuk capster ini.</Text>
           )}
         </View>
 
@@ -529,11 +599,31 @@ const BookingScreen = ({ route, navigation }) => {
           />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Pilih Capster (Wajib)</Text>
+              <Text style={styles.modalTitle}>Pilih Capster</Text>
               <TouchableOpacity onPress={() => setShowCapsterModal(false)}>
                 <Text style={styles.modalClose}>✕</Text>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity
+              style={[
+                styles.modalItem,
+                !selectedCapster && styles.modalItemSelected
+              ]}
+              onPress={() => {
+                setSelectedCapster(null);
+                setShowCapsterModal(false);
+              }}
+            >
+              <Text style={[
+                styles.modalItemText,
+                !selectedCapster && styles.modalItemTextSelected
+              ]}>
+                Tidak memilih capster
+              </Text>
+              {!selectedCapster && (
+                <Text style={styles.checkMark}>✓</Text>
+              )}
+            </TouchableOpacity>
             <FlatList
               data={capsters}
               keyExtractor={(item, index) => `capster-modal-${item.id || index}-${Math.random()}`}
@@ -662,6 +752,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textDark,
     marginLeft: 8,
+  },
+  phoneInput: {
+    borderWidth: 1,
+    borderColor: Colors.borderColor,
+    borderRadius: 8,
+    padding: 14,
+    backgroundColor: Colors.bgColor,
+    fontSize: 16,
+    color: Colors.textDark,
   },
   slotGrid: {
     flexDirection: 'row',

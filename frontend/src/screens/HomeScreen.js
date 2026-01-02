@@ -543,7 +543,7 @@ const HomeScreen = ({ navigation }) => {
                         </View>
                       )}
                       <Text style={styles.capsterName}>{capster.name?.toUpperCase()}</Text>
-                      <Text style={styles.capsterAlias}>@{(capster.alias || capster.instaAcc || '').toUpperCase()}</Text>
+                      <Text style={styles.capsterAlias}>[{(capster.alias || capster.instaAcc || '').toUpperCase()}]</Text>
                     </TouchableOpacity>
                   </AnimatedCard>
                 );
