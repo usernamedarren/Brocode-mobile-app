@@ -72,6 +72,7 @@ export default {
   addService,
   getAppointments,
   getAppointmentsByDate,
+  deletePastAppointments,
   getAppointmentsByUser,
   addAppointment,
   updateAppointmentStatus,
@@ -184,6 +185,8 @@ async function addService({ name, description, price, type }) {
 }
 
 // ===================== Appointments Helpers =====================
+const ALLOWED_APPOINTMENT_STATUSES = ['pending', 'approved', 'not approved']
+
 // Helper to enrich appointments with capster names
 async function enrichAppointmentsWithCapsterNames(appointments) {
   if (!appointments || appointments.length === 0) return appointments
@@ -214,7 +217,7 @@ function buildAppointmentQuery({ date, capsterId, statuses = [], select = '*' })
   if (date) params.push(`date=eq.${encodeURIComponent(date)}`)
   if (capsterId) params.push(`capsterId=eq.${encodeURIComponent(capsterId)}`)
 
-  const filteredStatuses = (statuses || []).filter(Boolean)
+  const filteredStatuses = (statuses || []).map((s) => String(s).toLowerCase()).filter(Boolean)
   if (filteredStatuses.length) {
     const orClause = filteredStatuses.map((s) => `status.eq.${encodeURIComponent(s)}`).join(',')
     params.push(`or=(${orClause})`)
@@ -256,6 +259,19 @@ async function getAppointmentsByDate({ date, capsterId, statuses = [] }) {
   return await enrichAppointmentsWithCapsterNames(appointments)
 }
 
+// Delete appointments whose date is before today (cleanup helper)
+async function deletePastAppointments(referenceDate = new Date()) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for appointment cleanup')
+  const todayStr = referenceDate.toISOString().split('T')[0]
+  const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/appointment?date=lt.${todayStr}`
+  const resp = await fetchImpl(url, { method: 'DELETE', headers: buildHeaders({ write: true }) })
+  if (!resp.ok) {
+    const t = await resp.text()
+    throw new Error(`Supabase cleanup error: ${resp.status} ${t}`)
+  }
+  return true
+}
+
 async function getAppointmentsByUser(userEmail) {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for appointment fetch')
   // Filter by email since user_id column doesn't exist
@@ -284,7 +300,9 @@ async function addAppointment({ name, email, phone, date, time, service, capster
     service: service || null,
     service_id: service_id || null,
     capsterId: capsterId || capster_id,
-    status: status,
+    status: (status && ALLOWED_APPOINTMENT_STATUSES.includes(String(status).toLowerCase()))
+      ? String(status).toLowerCase()
+      : 'pending',
     notes: notes || null,
     timestamp: timestamp || new Date().toISOString()
   }
@@ -298,7 +316,7 @@ async function addAppointment({ name, email, phone, date, time, service, capster
     const conflicting = await getAppointmentsByDate({
       date: appointmentData.date,
       capsterId: appointmentData.capsterId,
-      statuses: ['approved', 'confirmed']
+      statuses: ['approved']
     })
     const hasSameTime = (conflicting || []).some((apt) => apt.time === appointmentData.time)
     if (hasSameTime) {
@@ -384,11 +402,15 @@ async function addListAppointment({ appointment_id, status }){
 
 // Update appointment status (e.g., pending -> accepted/rejected)
 async function updateAppointmentStatus(id, status){
+  const normalizedStatus = String(status || '').toLowerCase()
+  if (!ALLOWED_APPOINTMENT_STATUSES.includes(normalizedStatus)) {
+    throw new Error('Invalid status')
+  }
   if (!id) throw new Error('appointment id required')
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase env vars missing for status update')
   const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/appointment?id=eq.${encodeURIComponent(id)}`
   if (!fetchImpl) throw new Error('No fetch implementation available')
-  const resp = await fetchImpl(url, { method:'PATCH', headers: buildHeaders({ write:true, json:true, preferReturn: true }), body: JSON.stringify({ status }) })
+  const resp = await fetchImpl(url, { method:'PATCH', headers: buildHeaders({ write:true, json:true, preferReturn: true }), body: JSON.stringify({ status: normalizedStatus }) })
   if (!resp.ok){ const t=await resp.text(); throw new Error(`Supabase appointment update error: ${resp.status} ${t}`) }
   // If Prefer return=representation is honored, return the updated row for convenience
   try {

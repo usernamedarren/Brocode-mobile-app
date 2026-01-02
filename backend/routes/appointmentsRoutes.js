@@ -35,6 +35,13 @@ router.get(['/appointment', '/appointments'], async (req, res) => {
   try {
     const { user_id, email, date, capsterId, statuses } = req.query
     let rows
+
+    // Cleanup past appointments silently (best effort)
+    try {
+      await db.deletePastAppointments()
+    } catch (cleanupErr) {
+      console.warn('Past appointment cleanup failed:', cleanupErr && cleanupErr.message)
+    }
     
     // Support both user_id (for backward compatibility) and email (preferred)
     const filterBy = email || user_id
@@ -46,7 +53,7 @@ router.get(['/appointment', '/appointments'], async (req, res) => {
     } else if (date) {
       const statusList = typeof statuses === 'string' && statuses.length
         ? statuses.split(',').map((s) => s.trim()).filter(Boolean)
-        : ['approved', 'confirmed']
+        : ['approved']
       rows = await db.getAppointmentsByDate({ date, capsterId, statuses: statusList })
     } else {
       rows = await db.getAppointments()
@@ -155,9 +162,12 @@ router.patch('/appointment/:id/status', async (req,res)=>{
   try {
     const { id } = req.params
     const { status } = req.body || {}
+    const normalizedStatus = typeof status === 'string' ? status.toLowerCase() : ''
+    const allowed = ['pending', 'approved', 'not approved']
     if (!status) return res.status(400).json({ error: 'status required' })
-    await db.updateAppointmentStatus(id, status)
-    return res.json({ data: { id, status } })
+    if (!allowed.includes(normalizedStatus)) return res.status(400).json({ error: 'invalid status' })
+    await db.updateAppointmentStatus(id, normalizedStatus)
+    return res.json({ data: { id, status: normalizedStatus } })
   } catch(err){
     console.error('PATCH /api/appointment/:id/status error', err && err.message)
     return res.status(500).json({ error: 'Server error' })
