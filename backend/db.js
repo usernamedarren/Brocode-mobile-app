@@ -288,7 +288,7 @@ async function getAppointmentsByUser(userEmail) {
   return await enrichAppointmentsWithCapsterNames(appointments)
 }
 
-async function addAppointment({ name, email, phone, date, time, service, capsterId, status = 'pending', notes, timestamp, user_id, service_id, capster_id, appointment_date, appointment_time }) {
+async function addAppointment({ name, email, phone, date, time, service, capsterId, status = 'pending', notes, timestamp, user_id, service_id, appointment_date, appointment_time }) {
   // Support both web and mobile formats
   const appointmentData = {
     user_id: user_id || null,
@@ -299,7 +299,7 @@ async function addAppointment({ name, email, phone, date, time, service, capster
     time: time || appointment_time,
     service: service || null,
     service_id: service_id || null,
-    capsterId: capsterId || capster_id,
+    capsterId: capsterId || null,
     status: (status && ALLOWED_APPOINTMENT_STATUSES.includes(String(status).toLowerCase()))
       ? String(status).toLowerCase()
       : 'pending',
@@ -355,7 +355,7 @@ async function addAppointment({ name, email, phone, date, time, service, capster
     time: row.time, 
     service: row.service,
     service_id: row.service_id,
-    capsterId: row.capsterId ?? row.capster_id, 
+    capsterId: row.capsterId, 
     status: row.status, 
     notes: row.notes, 
     timestamp: row.timestamp ?? row.created_at,
