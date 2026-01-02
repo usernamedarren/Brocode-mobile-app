@@ -75,8 +75,11 @@ const BookingScreen = ({ route, navigation }) => {
         api.getCapsters(),
       ]);
       
-      console.log('Services fetched:', JSON.stringify(servicesRes?.data?.slice(0, 2)));
-      console.log('Capsters fetched:', JSON.stringify(capstersRes?.data?.slice(0, 2)));
+      console.log('Services fetched: Total', servicesRes?.data?.length, 'items');
+      console.log('Capsters fetched: Total', capstersRes?.data?.length, 'capsters');
+      if (capstersRes?.data?.length > 0) {
+        console.log('Capster IDs:', capstersRes.data.map(c => `${c.id}:${c.name}`).join(', '));
+      }
       
       setServices(servicesRes?.data || []);
       setCapsters(capstersRes?.data || []);
@@ -126,42 +129,65 @@ const BookingScreen = ({ route, navigation }) => {
         console.log('Final reserved slots set:', takenSlots.length, 'slots');
       } else {
         // No capster selected - check all capsters and mark slots booked if ALL are taken
-        if (capsters.length === 0) {
-          setReservedSlots([]);
-          return;
-        }
-        
-        // Fetch appointments for all capsters
-        const allPromises = capsters.map(c => 
-          api.getAppointmentsByDate({ date: dateStr, capsterId: c.id })
-            .then(res => ({ 
-              capsterId: c.id, 
-              slots: (res?.data || []).map(item => {
-                const t = item.time || '';
-                return t.length > 5 ? t.slice(0, 5) : t;
+        // First, refresh capster list to ensure we have the latest data
+        try {
+          const freshCapstersRes = await api.getCapsters();
+          const freshCapsters = freshCapstersRes?.data || [];
+          console.log('Refreshed capsters for all-check:', freshCapsters.length, 'capsters');
+          
+          if (freshCapsters.length === 0) {
+            setReservedSlots([]);
+            return;
+          }
+          
+          console.log('Checking all capsters - total count:', freshCapsters.length);
+          
+          // Fetch appointments for all capsters using the fresh list
+          const allPromises = freshCapsters.map(c => 
+            api.getAppointmentsByDate({ date: dateStr, capsterId: c.id })
+              .then(res => {
+                const slots = (res?.data || []).map(item => {
+                  const t = item.time || '';
+                  return t.length > 5 ? t.slice(0, 5) : t;
+                });
+                console.log(`Capster ${c.name} (${c.id}) slots:`, slots);
+                return { capsterId: c.id, capsterName: c.name, slots };
               })
-            }))
-            .catch(() => ({ capsterId: c.id, slots: [] }))
-        );
-        
-        const results = await Promise.all(allPromises);
-        
-        // Count how many capsters have each slot booked
-        const slotCounts = {};
-        results.forEach(({ slots }) => {
-          slots.forEach(slot => {
-            slotCounts[slot] = (slotCounts[slot] || 0) + 1;
+              .catch(err => {
+                console.error(`Error fetching for capster ${c.name}:`, err);
+                return { capsterId: c.id, capsterName: c.name, slots: [] };
+              })
+          );
+          
+          const results = await Promise.all(allPromises);
+          console.log('All capster results:', results);
+          
+          // Count how many capsters have each slot booked
+          const slotCounts = {};
+          results.forEach(({ slots }) => {
+            slots.forEach(slot => {
+              slotCounts[slot] = (slotCounts[slot] || 0) + 1;
+            });
           });
-        });
-        
-        // Mark slot as reserved if ALL capsters are booked
-        const fullyBookedSlots = Object.keys(slotCounts).filter(
-          slot => slotCounts[slot] >= capsters.length
-        );
-        
-        console.log('All capsters check - fully booked slots:', fullyBookedSlots);
-        setReservedSlots(fullyBookedSlots);
-        console.log('Final reserved slots set:', fullyBookedSlots.length, 'slots');
+          
+          console.log('Slot counts map:', slotCounts);
+          console.log('Total capsters:', freshCapsters.length);
+          
+          // Mark slot as reserved if ALL capsters are booked
+          const fullyBookedSlots = Object.keys(slotCounts).filter(
+            slot => {
+              const isFullyBooked = slotCounts[slot] >= freshCapsters.length;
+              console.log(`Slot ${slot}: ${slotCounts[slot]}/${freshCapsters.length} capsters booked - ${isFullyBooked ? 'BOOKED' : 'AVAILABLE'}`);
+              return isFullyBooked;
+            }
+          );
+          console.log('All capsters check - fully booked slots:', fullyBookedSlots);
+          setReservedSlots(fullyBookedSlots);
+          console.log('Final reserved slots set:', fullyBookedSlots.length, 'slots');
+        } catch (err) {
+          console.error('Error in all-capsters check:', err);
+          setReservedSlots([]);
+        }
       }
     } catch (error) {
       console.error('Error fetching slot availability:', error);
