@@ -141,6 +141,7 @@ const HomeScreen = ({ navigation }) => {
   const preloadImages = async () => {
     try {
       const imageAssets = [
+        require('../../assets/home-bg.png'),
         require('../../assets/capster-1.png'),
         require('../../assets/capster-2.png'),
         require('../../assets/capster-3.png'),
@@ -371,9 +372,13 @@ const HomeScreen = ({ navigation }) => {
           },
         ]}
       >
-        <View style={styles.heroBackgroundImage}>
+        <ImageBackground
+          source={require('../../assets/home-bg.png')}
+          style={styles.heroBackgroundImage}
+          resizeMode="cover"
+        >
           <View style={styles.heroOverlayBackground} />
-        </View>
+        </ImageBackground>
       </Animated.View>
 
       <Animated.ScrollView
@@ -764,7 +769,8 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
-    backgroundColor: '#8B4513', // theme background
+    backgroundColor: '#8B4513', // fallback color behind image
+    overflow: 'hidden',
   },
   heroOverlayBackground: {
     flex: 1,
