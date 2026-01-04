@@ -1,12 +1,17 @@
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-if (!API_BASE_URL) {
-  throw new Error('Missing EXPO_PUBLIC_API_BASE_URL environment variable. Please check your .env file.');
-}
+export const isApiConfigured = Boolean(API_BASE_URL);
+
+const buildUrl = (path) => {
+  if (!API_BASE_URL) {
+    throw new Error('App belum dikonfigurasi: EXPO_PUBLIC_API_BASE_URL belum diset.');
+  }
+  return `${API_BASE_URL}${path}`;
+};
 
 export const api = {
   login: async (email, password) => {
-    const response = await fetch(`${API_BASE_URL}/api/login`, {
+    const response = await fetch(buildUrl('/api/login'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -23,7 +28,7 @@ export const api = {
   },
 
   register: async (name, email, phone, password) => {
-    const response = await fetch(`${API_BASE_URL}/api/register`, {
+    const response = await fetch(buildUrl('/api/register'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -41,7 +46,7 @@ export const api = {
 
   // Get user profile
   getProfile: async (token) => {
-    const response = await fetch(`${API_BASE_URL}/accounts/profile`, {
+    const response = await fetch(buildUrl('/accounts/profile'), {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -57,7 +62,7 @@ export const api = {
 
   // Get all capsters
   getCapsters: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/capsters`);
+    const response = await fetch(buildUrl('/api/capsters'));
     
     if (!response.ok) {
       throw new Error('Failed to fetch capsters');
@@ -68,7 +73,7 @@ export const api = {
 
   // Get all services
   getServices: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/services`);
+    const response = await fetch(buildUrl('/api/services'));
     
     if (!response.ok) {
       throw new Error('Failed to fetch services');
@@ -79,7 +84,7 @@ export const api = {
 
   // Create capster
   createCapster: async (payload) => {
-    const resp = await fetch(`${API_BASE_URL}/api/capster`, {
+    const resp = await fetch(buildUrl('/api/capster'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -90,7 +95,7 @@ export const api = {
   },
 
   updateCapster: async (id, payload) => {
-    const resp = await fetch(`${API_BASE_URL}/api/capster/${id}`, {
+    const resp = await fetch(buildUrl(`/api/capster/${id}`), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -101,7 +106,7 @@ export const api = {
   },
 
   deleteCapster: async (id) => {
-    const resp = await fetch(`${API_BASE_URL}/api/capster/${id}`, { method: 'DELETE' })
+    const resp = await fetch(buildUrl(`/api/capster/${id}`), { method: 'DELETE' })
     if (!resp.ok) {
       const txt = await resp.text()
       throw new Error(txt || 'Failed to delete capster')
@@ -110,7 +115,7 @@ export const api = {
   },
 
   createService: async (payload) => {
-    const resp = await fetch(`${API_BASE_URL}/api/service`, {
+    const resp = await fetch(buildUrl('/api/service'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -121,7 +126,7 @@ export const api = {
   },
 
   updateService: async (name, payload) => {
-    const resp = await fetch(`${API_BASE_URL}/api/service/${encodeURIComponent(name)}`, {
+    const resp = await fetch(buildUrl(`/api/service/${encodeURIComponent(name)}`), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -132,7 +137,7 @@ export const api = {
   },
 
   deleteService: async (name) => {
-    const resp = await fetch(`${API_BASE_URL}/api/service/${encodeURIComponent(name)}`, { method: 'DELETE' })
+    const resp = await fetch(buildUrl(`/api/service/${encodeURIComponent(name)}`), { method: 'DELETE' })
     if (!resp.ok) {
       const txt = await resp.text()
       throw new Error(txt || 'Failed to delete service')
@@ -141,7 +146,7 @@ export const api = {
   },
 
   updateAppointment: async (id, payload) => {
-    const resp = await fetch(`${API_BASE_URL}/api/appointment/${id}`, {
+    const resp = await fetch(buildUrl(`/api/appointment/${id}`), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -152,7 +157,7 @@ export const api = {
   },
 
   deleteAppointment: async (id) => {
-    const resp = await fetch(`${API_BASE_URL}/api/appointment/${id}`, { method: 'DELETE' })
+    const resp = await fetch(buildUrl(`/api/appointment/${id}`), { method: 'DELETE' })
     if (!resp.ok) {
       const txt = await resp.text()
       throw new Error(txt || 'Failed to delete appointment')
@@ -164,7 +169,7 @@ export const api = {
   createAppointment: async (appointmentData) => {
     try {
       console.log('Creating appointment with data:', appointmentData);
-      const response = await fetch(`${API_BASE_URL}/api/appointments`, {
+      const response = await fetch(buildUrl('/api/appointments'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

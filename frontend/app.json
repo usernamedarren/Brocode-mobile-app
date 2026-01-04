@@ -1,37 +1,35 @@
 {
   "expo": {
-    "name": "Barbershop Booking",
-    "slug": "barbershop-booking",
+    "name": "BroCode",
+    "slug": "brocode",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#8B4513"
-    },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.barbershop.booking"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#8B4513"
       },
-      "edgeToEdgeEnabled": true,
-      "package": "com.barbershop.booking"
+      "package": "com.brocode.mobile"
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.brocode.mobile"
     },
     "extra": {
       "eas": {
-        "projectId": "1c0c0444-7bf0-4a40-9f52-d8ceabf056fd"
+        "projectId": "804b86a4-f5a2-4b19-929b-9d69ecab1ff3"
       }
     },
-    "owner": "amudixp"
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
   }
 }
