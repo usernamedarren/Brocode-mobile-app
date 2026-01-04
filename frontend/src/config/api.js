@@ -1,4 +1,7 @@
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+import Constants from 'expo-constants';
+
+const config = Constants.expoConfig ?? Constants.manifest ?? {};
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || config?.extra?.apiBaseUrl;
 
 export const isApiConfigured = Boolean(API_BASE_URL);
 
