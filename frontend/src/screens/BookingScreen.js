@@ -249,6 +249,34 @@ const BookingScreen = ({ route, navigation }) => {
     return `${year}-${month}-${day}`;
   };
 
+  const pickRandomAvailableCapster = async (dateObj, timeSlot) => {
+    const dateStr = formatDateForApi(dateObj);
+    const list = capsters?.length ? capsters : ((await api.getCapsters())?.data || []);
+    if (!list.length) return null;
+
+    const availability = await Promise.all(
+      list.map(async (c) => {
+        try {
+          const res = await api.getAppointmentsByDate({ date: dateStr, capsterId: c.id });
+          const booked = (res?.data || []).map((item) => {
+            const t = item.time || '';
+            return t.length > 5 ? t.slice(0, 5) : t;
+          });
+          return { capster: c, booked };
+        } catch (err) {
+          console.error('Availability error for capster', c.name, err);
+          return { capster: c, booked: [] };
+        }
+      })
+    );
+
+    const available = availability.filter(({ booked }) => !booked.includes(timeSlot));
+    if (!available.length) return null;
+
+    const randomIndex = Math.floor(Math.random() * available.length);
+    return available[randomIndex].capster;
+  };
+
   const isSlotInPast = (slot) => {
     if (!selectedDate) return false;
     const now = new Date();
@@ -322,14 +350,25 @@ const BookingScreen = ({ route, navigation }) => {
     try {
       const appointmentDate = formatDateForApi(selectedDate);
       const appointmentTime = selectedTimeSlot;
+
+      let capsterToUse = selectedCapster;
+      if (!capsterToUse) {
+        capsterToUse = await pickRandomAvailableCapster(selectedDate, selectedTimeSlot);
+        if (!capsterToUse) {
+          Alert.alert('Penuh', 'Semua capster penuh di jam ini. Silakan pilih jam lain.');
+          setLoading(false);
+          return;
+        }
+        setSelectedCapster(capsterToUse);
+      }
       
       const appointmentData = {
         name: user.name,
         email: user.email,
         phone: phoneNumber.trim(),
         service: selectedService.name,
-        capster: selectedCapster?.name || selectedCapster?.alias || '',
-        capsterId: selectedCapster?.id || null,
+        capster: capsterToUse?.name || capsterToUse?.alias || '',
+        capsterId: capsterToUse?.id || null,
         date: appointmentDate,
         time: appointmentTime,
         status: 'pending',
